@@ -1,0 +1,134 @@
+import { Input, Output } from "@julusian/midi";
+
+import { assertConfigurationWrite, assertReadOnlyRequest, isIdentityResponse, UNIVERSAL_IDENTITY_REQUEST } from "./protocol.js";
+import type { DeviceDescriptor } from "./model.js";
+import { parseIdentityResponse } from "./protocol.js";
+
+export type MessageHandler = (message: number[]) => void;
+
+export interface MidiConnection {
+  send(message: ArrayLike<number>): void;
+  subscribe(handler: MessageHandler): () => void;
+  close(): void;
+}
+
+export interface ConfigurationWriteConnection extends MidiConnection {
+  sendConfigurationWrite(message: ArrayLike<number>): void;
+}
+
+export interface MidiBackend {
+  discover(timeoutMs: number): Promise<DeviceDescriptor[]>;
+  connect(device: DeviceDescriptor): MidiConnection;
+  connectForApply(device: DeviceDescriptor): ConfigurationWriteConnection;
+}
+
+class RtMidiConnection implements MidiConnection {
+  private readonly input = new Input();
+  private readonly output = new Output();
+  private readonly handlers = new Set<MessageHandler>();
+
+  constructor(inputPort: number, outputPort: number) {
+    this.input.ignoreTypes(false, true, true);
+    this.input.on("message", (_deltaTime: number, message: number[]) => {
+      for (const handler of this.handlers) handler([...message]);
+    });
+    this.input.openPort(inputPort);
+    this.output.openPort(outputPort);
+  }
+
+  send(message: ArrayLike<number>): void {
+    assertReadOnlyRequest(message);
+    this.output.sendMessage(Array.from(message));
+  }
+
+  sendConfigurationWrite(message: ArrayLike<number>): void {
+    assertConfigurationWrite(message);
+    this.output.sendMessage(Array.from(message));
+  }
+
+  subscribe(handler: MessageHandler): () => void {
+    this.handlers.add(handler);
+    return () => this.handlers.delete(handler);
+  }
+
+  close(): void {
+    this.handlers.clear();
+    this.input.closePort();
+    this.output.closePort();
+  }
+}
+
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+/**
+ * Probe every MIDI output while listening on every input. This does not rely on
+ * port names, which vary across CoreMIDI, ALSA, and Windows MIDI services.
+ */
+export class RtMidiBackend implements MidiBackend {
+  async discover(timeoutMs = 350): Promise<DeviceDescriptor[]> {
+    const inputEnumerator = new Input();
+    const outputEnumerator = new Output();
+    const inputPorts = Array.from({ length: inputEnumerator.getPortCount() }, (_, index) => ({
+      index,
+      name: inputEnumerator.getPortName(index),
+    }));
+    const outputPorts = Array.from({ length: outputEnumerator.getPortCount() }, (_, index) => ({
+      index,
+      name: outputEnumerator.getPortName(index),
+    }));
+    inputEnumerator.closePort();
+    outputEnumerator.closePort();
+
+    const received: Array<{ inputIndex: number; message: number[] }> = [];
+    const inputs = inputPorts.map((port) => {
+      const input = new Input();
+      input.ignoreTypes(false, true, true);
+      input.on("message", (_deltaTime: number, message: number[]) => {
+        received.push({ inputIndex: port.index, message: [...message] });
+      });
+      input.openPort(port.index);
+      return input;
+    });
+
+    const discovered: DeviceDescriptor[] = [];
+    try {
+      for (const outputPort of outputPorts) {
+        const output = new Output();
+        output.openPort(outputPort.index);
+        const firstResponseIndex = received.length;
+        assertReadOnlyRequest(UNIVERSAL_IDENTITY_REQUEST);
+        output.sendMessage(Array.from(UNIVERSAL_IDENTITY_REQUEST));
+        await delay(timeoutMs);
+        output.closePort();
+
+        for (const response of received.slice(firstResponseIndex).filter((entry) => isIdentityResponse(entry.message))) {
+          const inputPort = inputPorts.find((port) => port.index === response.inputIndex)!;
+          discovered.push({
+            inputPort,
+            outputPort,
+            identity: parseIdentityResponse(response.message),
+          });
+        }
+      }
+    } finally {
+      for (const input of inputs) input.closePort();
+    }
+
+    const unique = new Map<string, DeviceDescriptor>();
+    for (const device of discovered) {
+      unique.set(`${device.inputPort.index}:${device.outputPort.index}`, device);
+    }
+    return [...unique.values()];
+  }
+
+  connect(device: DeviceDescriptor): MidiConnection {
+    return new RtMidiConnection(device.inputPort.index, device.outputPort.index);
+  }
+
+
+  connectForApply(device: DeviceDescriptor): ConfigurationWriteConnection {
+    return new RtMidiConnection(device.inputPort.index, device.outputPort.index);
+  }
+}

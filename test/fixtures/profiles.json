@@ -1,0 +1,5 @@
+[
+  { "name": "legacy-four-bank", "firmwareDate": "2023-06-08", "bankCount": 4, "lastTag": 64, "writeAllowed": false },
+  { "name": "2026-four-bank", "firmwareDate": "2026-07-02", "bankCount": 4, "lastTag": 0, "writeAllowed": true },
+  { "name": "2026-eight-bank", "firmwareDate": "2026-07-02", "bankCount": 8, "lastTag": 0, "writeAllowed": true }
+]

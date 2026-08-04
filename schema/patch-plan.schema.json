@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://djtechtools.com/schemas/mft-patch-plan-v1.json",
+  "title": "MIDI Fighter Twister patch plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "planId", "createdAt", "expiresAt", "snapshotHash", "deviceBinding", "applyEligibility", "changes", "frames"],
+  "properties": {
+    "schemaVersion": { "const": "djtt.mft.patch-plan.v1" },
+    "planId": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "snapshotHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "deviceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unitId", "firmwareDate", "familyId", "modelId", "identityStrength"],
+      "properties": {
+        "unitId": { "type": ["string", "null"] },
+        "firmwareDate": { "type": "string" },
+        "familyId": { "const": 5 },
+        "modelId": { "const": 1 },
+        "identityStrength": { "enum": ["strong", "weak"] }
+      }
+    },
+    "applyEligibility": {
+      "type": "object",
+      "required": ["eligible", "reasons"],
+      "properties": { "eligible": { "type": "boolean" }, "reasons": { "type": "array", "items": { "type": "string" } } }
+    },
+    "changes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "target", "tag", "expected", "desired", "rawExpected", "rawDesired"],
+        "properties": {
+          "path": { "type": "string" }, "target": { "type": "string" }, "tag": { "type": "integer", "minimum": 0, "maximum": 127 },
+          "expected": { "type": ["integer", "boolean"] }, "desired": { "type": ["integer", "boolean"] },
+          "rawExpected": { "type": "integer", "minimum": 0, "maximum": 127 }, "rawDesired": { "type": "integer", "minimum": 0, "maximum": 127 }
+        }
+      }
+    },
+    "frames": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["target", "command", "bytes", "hex"],
+        "properties": {
+          "target": { "type": "string" }, "command": { "enum": ["push-globals", "push-encoder"] },
+          "bytes": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 255 } }, "hex": { "type": "string" }
+        }
+      }
+    }
+  }
+}

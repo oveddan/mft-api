@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://djtechtools.com/schemas/mft-config-export-v1.json",
+  "title": "MIDI Fighter Twister configuration export",
+  "type": "object",
+  "required": ["schemaVersion", "capturedAt", "device", "capabilities", "globals", "banks", "warnings"],
+  "properties": {
+    "schemaVersion": { "const": "djtt.mft.config-export.v1" },
+    "capturedAt": { "type": "string", "format": "date-time" },
+    "device": { "type": "object" },
+    "capabilities": {
+      "type": "object",
+      "required": ["bankCount", "encodersPerBank"],
+      "properties": { "bankCount": { "enum": [4, 8] }, "encodersPerBank": { "const": 16 } }
+    },
+    "globals": { "type": "object", "required": ["rawTags"] },
+    "banks": { "type": "array", "minItems": 1 },
+    "warnings": { "type": "array", "items": { "type": "string" } }
+  }
+}
