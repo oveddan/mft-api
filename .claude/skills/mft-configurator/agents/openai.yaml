@@ -1,0 +1,4 @@
+interface:
+  display_name: "MIDI Fighter Twister Configurator"
+  short_description: "Safely inspect and configure a Twister"
+  default_prompt: "Use $mft-configurator to inspect my MIDI Fighter Twister configuration."
