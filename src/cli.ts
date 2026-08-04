@@ -8,6 +8,7 @@ import type { ConfigExport } from "./model.js";
 import { createPatchPlan, type PatchInput, type PatchPlan } from "./planner.js";
 import { applyPatchPlan } from "./applier.js";
 import { assertPlanNotConsumed } from "./journal.js";
+import { stateDirectory } from "./state.js";
 
 interface Arguments {
   command: "list" | "export" | "plan" | "apply" | "help";
@@ -22,10 +23,10 @@ interface Arguments {
 
 function usage(): string {
   return `Usage:
-  mft-export list [--timeout <milliseconds>]
-  mft-export export [--device <index>] [--out <file>] [--timeout <milliseconds>]
-  mft-export plan --snapshot <config.json> --set <path=value> [--set <path=value>] [--out <file>]
-  mft-export apply --plan <patch-plan.json> --yes [--device <index>]
+  mft-config list [--timeout <milliseconds>]
+  mft-config export [--device <index>] [--out <file>] [--timeout <milliseconds>]
+  mft-config plan --snapshot <config.json> --set <path=value> [--set <path=value>] [--out <file>]
+  mft-config apply --plan <patch-plan.json> --yes [--device <index>]
 
 This tool only sends Universal Identity, global pull (0x02), encoder bulk-pull
 (0x04/0x01), and device-ID pull (0x05) messages. The plan command is offline.
@@ -101,6 +102,9 @@ async function writeAtomically(path: string, data: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  if (process.argv[1]?.endsWith("mft-export")) {
+    process.stderr.write("mft-export is deprecated; use mft-config instead.\n");
+  }
   const args = parseArguments(process.argv.slice(2));
   if (args.command === "help") {
     process.stdout.write(`${usage()}\n`);
@@ -146,8 +150,8 @@ async function main(): Promise<void> {
 
   if (args.command === "apply") {
     const plan = JSON.parse(await readFile(resolve(args.plan!), "utf8")) as PatchPlan;
-    const stateDirectory = resolve(".mft-state");
-    const journalPath = resolve(stateDirectory, "journal.ndjson");
+    const stateRoot = stateDirectory();
+    const journalPath = resolve(stateRoot, "journal.ndjson");
     await assertPlanNotConsumed(journalPath, plan.planId);
     const connection = backend.connectForApply(device);
     try {
@@ -156,12 +160,12 @@ async function main(): Promise<void> {
         timeoutMs: args.timeoutMs,
         saveBackup: async (snapshot) => {
           const stamp = new Date().toISOString().replaceAll(":", "-");
-          const path = resolve(stateDirectory, "backups", `${stamp}.json`);
+          const path = resolve(stateRoot, "backups", `${stamp}.json`);
           await writeAtomically(path, `${JSON.stringify(snapshot, null, 2)}\n`);
           return path;
         },
       });
-      const postPath = resolve(stateDirectory, "last-verified.json");
+      const postPath = resolve(stateRoot, "last-verified.json");
       await writeAtomically(postPath, `${JSON.stringify(result.postSnapshot, null, 2)}\n`);
       process.stdout.write(`Applied and verified ${plan.changes.length} change(s).\nBackup: ${result.backupPath}\nVerified snapshot: ${postPath}\n`);
     } finally {
@@ -186,6 +190,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: Error) => {
-  process.stderr.write(`mft-export: ${error.message}\n`);
+  process.stderr.write(`mft-config: ${error.message}\n`);
   process.exitCode = 1;
 });
