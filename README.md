@@ -6,6 +6,9 @@ Its guarded `apply` command can send configuration pushes only for an allowliste
 strongly identified device; system commands, bootloader commands, and resets are
 always blocked.
 
+The SysEx protocol implemented here is based on the official
+[DJ TechTools MIDI Fighter Twister firmware](https://github.com/DJ-TechTools/Midi_Fighter_Twister_Open_Source).
+
 ## Requirements
 
 - Node.js 20 or newer
