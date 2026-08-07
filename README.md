@@ -1,9 +1,98 @@
 # MIDI Fighter Twister configuration API
 
-Read and write the persistent configuration of a DJ TechTools MIDI Fighter
-Twister from the command line. The tool discovers a connected Twister over USB MIDI,
-exports its complete SysEx configuration as JSON, creates reviewable offline
-change plans, and safely applies supported changes back to the controller.
+Read and write the persistent configuration of a DJ TechTools MIDI Fighter Twister —
+so an agent can set it up for you from a chat interface instead of you clicking through
+sixteen knobs by hand.
+
+<!-- IMAGE 1 (hero): photo of the Twister lit with a deliberate color layout —
+     e.g. top three rows one color, bottom row another. Shows the hardware and the
+     exact thing that is tedious to do by hand, in one frame.
+     Suggested path: docs/images/twister-hero.jpg -->
+
+![The MIDI Fighter Twister with a color layout applied](docs/images/twister-hero.jpg)
+
+## The problem
+
+It's a great controller because it's super programmable. You can change the MIDI CC
+values of every knob. You can change the colors. You can send values back to it to turn
+the knobs — so it's a bidirectional controller.
+
+But if you want to program it and map it to Ableton or Chromatik or TouchDesigner, it
+takes a few steps.
+
+First, you have to go into the UI and click on every single knob, one by one, to see
+what its MIDI CC value is. If you want to change a color, you set that up one by one
+too. It's hard to set a bunch of knobs' colors at once — let's say you want the top
+three rows to be the same color. Same with the button settings: trigger, latch, all the
+different button settings, you have to go one by one.
+
+The other thing is, let's say you have the program you're linking it with — Ableton,
+your music program, or TouchDesigner, or Chromatik. You then have to look in that
+program and manually reconcile what each MIDI CC value goes to. You have to manually map
+it, and you have to go back and forth between the two.
+
+<!-- IMAGE 2 (before/after): left — the stock Twister editor with a single knob
+     selected, showing what clicking through 16 knobs looks like. Right — the one
+     sentence that replaces it. Makes the tedium concrete for a reader who has never
+     opened the editor.
+     Suggested path: docs/images/before-after.png -->
+
+![The stock editor, one knob at a time, next to the sentence that replaces it](docs/images/before-after.png)
+
+## What this changes
+
+Now, with a single chat interface via agentic tools, you can just chat how you want it
+to be connected. You can say: I want this top knob to control intensity in
+TouchDesigner, or in these patterns. Or: I want this knob, when you press it, to trigger
+an instrument or a visual effect. And it'll do both the mapping and the color — you
+describe what color you want it to be — and it does all that in one shot.
+
+<!-- IMAGE 3 (the demo): short GIF or video — type a sentence, physical knobs change
+     color or turn. The bidirectional behavior is the least obvious property of this
+     device and the only way to convey it is to show it.
+     Suggested path: docs/images/chat-to-knobs.gif -->
+
+![Typing a sentence; the knobs change](docs/images/chat-to-knobs.gif)
+
+## Example: mapping a controller I didn't have
+
+This is how I actually used it in Chromatik. Someone had mapped a controller. I didn't
+have that controller on me, I had the MIDI Fighter Twister. I was able to say: look at
+how this controller is mapped, explain to me how it works. It was able to understand it.
+Then it was able to understand how the MIDI Fighter Twister works and suggest a few
+different possible sets of mappings for me, and I was able to choose one. Super easy.
+That would have taken me a very long time to do manually.
+
+<!-- IMAGE 4 (transcript): the actual chat exchange from that Chromatik session, as a
+     screenshot or a fenced block. This is the strongest single asset in the README —
+     it is a thing that happened rather than a claim about what is possible.
+     Suggested path: docs/images/chromatik-mapping-chat.png -->
+
+![The chat exchange that produced the mapping](docs/images/chromatik-mapping-chat.png)
+
+Underneath, the agent is driving the CLI documented below. Nothing is hidden — the same
+work by hand looks like this:
+
+```sh
+node dist/cli.js export --out twister-config.json
+
+node dist/cli.js plan \
+  --snapshot twister-config.json \
+  --set bank.1.encoder.1.colors.active=green \
+  --set bank.1.encoder.1.colors.inactive=purple \
+  --out patch-plan.json
+
+node dist/cli.js apply --plan patch-plan.json --yes
+```
+
+## What this is not
+
+This isn't meant to replace the artist. This is meant to help the creator or the artist
+do things a lot faster, without having to deal with user interfaces or clunky
+back-and-forth. You describe what you want and it gets done for you. So you can get to
+creating, instead of having to worry about the tech.
+
+---
 
 The protocol implementation is based on the
 [official DJ TechTools MIDI Fighter Twister firmware](https://github.com/DJ-TechTools/Midi_Fighter_Twister_Open_Source).
