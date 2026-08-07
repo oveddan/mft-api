@@ -357,3 +357,8 @@ encoder-tag probe and then reads all 64 or 128 encoder records sequentially.
 - Individual side-button actions are read-only in the current planner.
 - Restore is not exposed as a command yet. Backups are retained under
   `.mft-state/backups/` for a future confirmed restore workflow.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file
+for the full text.

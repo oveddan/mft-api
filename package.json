@@ -2,6 +2,7 @@
   "name": "@djtechtools/mft-export",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Guarded MIDI Fighter Twister configuration exporter and planner",
   "bin": {
