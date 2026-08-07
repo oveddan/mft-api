@@ -29,9 +29,10 @@ function waitForMessage<T>(
 ): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     let unsubscribe = () => {};
+    let parseError: Error | undefined;
     const timer = setTimeout(() => {
       unsubscribe();
-      reject(new Error(`Timed out after ${timeoutMs} ms`));
+      reject(parseError ?? new Error(`Timed out after ${timeoutMs} ms`));
     }, timeoutMs);
     unsubscribe = connection.subscribe((message) => {
       try {
@@ -40,8 +41,8 @@ function waitForMessage<T>(
         clearTimeout(timer);
         unsubscribe();
         resolve(result);
-      } catch {
-        // Ignore unrelated MIDI and malformed responses while waiting.
+      } catch (error) {
+        parseError = error as Error;
       }
     });
     send();
@@ -66,13 +67,7 @@ async function pullGlobals(connection: MidiConnection, timeoutMs: number, retrie
       waitForMessage(
         connection,
         () => connection.send(pullGlobalsRequest()),
-        (message) => {
-          try {
-            return parseGlobalResponse(message);
-          } catch {
-            return undefined;
-          }
-        },
+        (message) => message[4] === 0x02 ? parseGlobalResponse(message) : undefined,
         timeoutMs,
       ),
     retries,
@@ -86,11 +81,8 @@ async function pullDeviceId(connection: MidiConnection, timeoutMs: number): Prom
       connection,
       () => connection.send(getDeviceIdRequest()),
       (message) => {
-        try {
-          return parseDeviceIdResponse(message);
-        } catch {
-          return undefined;
-        }
+        if (message[4] !== 0x05) return undefined;
+        return parseDeviceIdResponse(message);
       },
       timeoutMs,
     );
@@ -110,9 +102,10 @@ async function pullEncoderData(
       new Promise<number[]>((resolve, reject) => {
         const parts = new Map<number, BulkPart>();
         let expectedTotal: number | undefined;
+        let malformed: Error | undefined;
         const timer = setTimeout(() => {
           unsubscribe();
-          reject(new Error(`Timed out after ${timeoutMs} ms`));
+          reject(malformed ?? new Error(`Timed out after ${timeoutMs} ms`));
         }, timeoutMs);
         const unsubscribe = connection.subscribe((message) => {
           try {
@@ -125,8 +118,8 @@ async function pullEncoderData(
             clearTimeout(timer);
             unsubscribe();
             resolve(assembleBulkParts([...parts.values()]));
-          } catch {
-            // Ignore unrelated MIDI traffic.
+          } catch (error) {
+            if (message[4] === 0x04) malformed = error as Error;
           }
         });
         connection.send(pullEncoderRequest(tag));

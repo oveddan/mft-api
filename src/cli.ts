@@ -11,7 +11,7 @@ import { assertPlanNotConsumed } from "./journal.js";
 import { stateDirectory } from "./state.js";
 
 interface Arguments {
-  command: "list" | "export" | "plan" | "apply" | "help";
+  command: "list" | "export" | "plan" | "apply" | "ui" | "help";
   device?: number;
   out?: string;
   timeoutMs: number;
@@ -27,6 +27,7 @@ function usage(): string {
   mft-config export [--device <index>] [--out <file>] [--timeout <milliseconds>]
   mft-config plan --snapshot <config.json> --set <path=value> [--set <path=value>] [--out <file>]
   mft-config apply --plan <patch-plan.json> --yes [--device <index>]
+  mft-config ui
 
 This tool only sends Universal Identity, global pull (0x02), encoder bulk-pull
 (0x04/0x01), and device-ID pull (0x05) messages. The plan command is offline.
@@ -39,7 +40,7 @@ function parseArguments(argv: string[]): Arguments {
   if (command === "help" || command === "--help" || command === "-h") {
     return { command: "help", timeoutMs: 500, sets: [], yes: false };
   }
-  if (command !== "list" && command !== "export" && command !== "plan" && command !== "apply") throw new Error(`Unknown command: ${command}`);
+  if (command !== "list" && command !== "export" && command !== "plan" && command !== "apply" && command !== "ui") throw new Error(`Unknown command: ${command}`);
 
   const result: Arguments = { command, timeoutMs: 500, sets: [], yes: false };
   for (let index = 1; index < argv.length; index += 1) {
@@ -121,6 +122,16 @@ async function main(): Promise<void> {
     } else {
       process.stdout.write(json);
     }
+    return;
+  }
+
+  if (args.command === "ui") {
+    const { startUiServer } = await import("./ui-server.js");
+    const host = process.env.MFT_CONFIG_UI_HOST ?? "127.0.0.1";
+    const port = Number(process.env.MFT_CONFIG_UI_PORT ?? "4783");
+    if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error("MFT_CONFIG_UI_PORT must be an integer from 0 to 65535");
+    const { url } = await startUiServer(host, port);
+    process.stdout.write(`MFT Config read-only UI: ${url}\n`);
     return;
   }
 

@@ -22,7 +22,7 @@ export interface MidiBackend {
   connectForApply(device: DeviceDescriptor): ConfigurationWriteConnection;
 }
 
-class RtMidiConnection implements MidiConnection {
+class RtMidiPorts implements MidiConnection {
   private readonly input = new Input();
   private readonly output = new Output();
   private readonly handlers = new Set<MessageHandler>();
@@ -37,12 +37,6 @@ class RtMidiConnection implements MidiConnection {
   }
 
   send(message: ArrayLike<number>): void {
-    assertReadOnlyRequest(message);
-    this.output.sendMessage(Array.from(message));
-  }
-
-  sendConfigurationWrite(message: ArrayLike<number>): void {
-    assertConfigurationWrite(message);
     this.output.sendMessage(Array.from(message));
   }
 
@@ -58,6 +52,50 @@ class RtMidiConnection implements MidiConnection {
   }
 }
 
+/** Guarded connection used by every read-only host surface. */
+export class ReadOnlyMidiConnection implements MidiConnection {
+  constructor(private readonly transport: MidiConnection) {}
+
+  send(message: ArrayLike<number>): void {
+    assertReadOnlyRequest(message);
+    this.transport.send(message);
+  }
+
+  subscribe(handler: MessageHandler): () => void {
+    return this.transport.subscribe(handler);
+  }
+
+  close(): void {
+    this.transport.close();
+  }
+}
+
+class RtMidiApplyConnection implements ConfigurationWriteConnection {
+  private readonly transport: MidiConnection;
+
+  constructor(inputPort: number, outputPort: number) {
+    this.transport = new RtMidiPorts(inputPort, outputPort);
+  }
+
+  send(message: ArrayLike<number>): void {
+    assertReadOnlyRequest(message);
+    this.transport.send(message);
+  }
+
+  sendConfigurationWrite(message: ArrayLike<number>): void {
+    assertConfigurationWrite(message);
+    this.transport.send(message);
+  }
+
+  subscribe(handler: MessageHandler): () => void {
+    return this.transport.subscribe(handler);
+  }
+
+  close(): void {
+    this.transport.close();
+  }
+}
+
 function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
@@ -66,8 +104,7 @@ function delay(milliseconds: number): Promise<void> {
  * Probe every MIDI output while listening on every input. This does not rely on
  * port names, which vary across CoreMIDI, ALSA, and Windows MIDI services.
  */
-export class RtMidiBackend implements MidiBackend {
-  async discover(timeoutMs = 350): Promise<DeviceDescriptor[]> {
+async function discoverTwisters(timeoutMs = 350): Promise<DeviceDescriptor[]> {
     const inputEnumerator = new Input();
     const outputEnumerator = new Output();
     const inputPorts = Array.from({ length: inputEnumerator.getPortCount() }, (_, index) => ({
@@ -120,15 +157,34 @@ export class RtMidiBackend implements MidiBackend {
     for (const device of discovered) {
       unique.set(`${device.inputPort.index}:${device.outputPort.index}`, device);
     }
-    return [...unique.values()];
+  return [...unique.values()];
+}
+
+export class RtMidiBackend implements MidiBackend {
+  discover(timeoutMs = 350): Promise<DeviceDescriptor[]> {
+    return discoverTwisters(timeoutMs);
   }
 
   connect(device: DeviceDescriptor): MidiConnection {
-    return new RtMidiConnection(device.inputPort.index, device.outputPort.index);
+    return new ReadOnlyMidiConnection(new RtMidiPorts(device.inputPort.index, device.outputPort.index));
   }
 
 
   connectForApply(device: DeviceDescriptor): ConfigurationWriteConnection {
-    return new RtMidiConnection(device.inputPort.index, device.outputPort.index);
+    return new RtMidiApplyConnection(device.inputPort.index, device.outputPort.index);
+  }
+}
+
+/**
+ * Backend exposed to read-only surfaces. Its public API cannot construct the
+ * separate apply connection, so a UI route cannot accidentally gain writes.
+ */
+export class RtMidiReadOnlyBackend implements Pick<MidiBackend, "discover" | "connect"> {
+  discover(timeoutMs: number): Promise<DeviceDescriptor[]> {
+    return discoverTwisters(timeoutMs);
+  }
+
+  connect(device: DeviceDescriptor): MidiConnection {
+    return new ReadOnlyMidiConnection(new RtMidiPorts(device.inputPort.index, device.outputPort.index));
   }
 }

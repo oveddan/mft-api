@@ -40,14 +40,20 @@ try {
     "README.md",
     "dist/cli.js",
     "dist/applier.js",
+    "dist/ui-server.js",
+    "docs/ui-architecture.md",
     "docs/write-safety.md",
     "package.json",
     "schema/config-export.schema.json",
     "schema/patch-plan.schema.json",
+    "ui/index.html",
+    "ui/app.js",
+    "ui/colors.js",
+    "ui/styles.css",
   ];
   for (const path of required) assert.ok(paths.includes(path), `packed artifact is missing ${path}`);
   for (const path of paths) {
-    assert.match(path, /^(README\.md|package\.json|(?:LICENSE|LICENCE|COPYING)(?:\..+)?|dist\/.+\.js|docs\/write-safety\.md|schema\/[^/]+\.json)$/);
+    assert.match(path, /^(README\.md|package\.json|(?:LICENSE|LICENCE|COPYING)(?:\..+)?|dist\/.+\.js|docs\/(?:write-safety|ui-architecture)\.md|schema\/[^/]+\.json|ui\/(?:index\.html|app\.js|colors\.js|styles\.css))$/);
   }
   assert.ok(!paths.some((path) => /(^|\/)(src|test|scripts|node_modules|\.mft-state)(\/|$)/.test(path)));
 

@@ -34,6 +34,8 @@ MIDI channel, and MIDI number are independently configurable.
   It does not open MIDI ports.
 - `apply` writes an eligible plan, saves a backup first, and reads the entire
   controller back after every changed target to verify the result.
+- `ui` opens a local, visual, strictly read-only inspector for a connected
+  controller or a previously exported JSON snapshot.
 
 Only `apply` can write configuration. System commands, reset commands, and
 bootloader commands are always blocked. Live writes currently require firmware
@@ -68,6 +70,31 @@ Confirm the command is ready:
 ```sh
 mft-config --help
 ```
+
+## Visual read-only viewer
+
+Build and start the local viewer:
+
+```sh
+mft-config ui
+```
+
+Open the printed `http://127.0.0.1:4783` URL. Discover a connected Twister,
+select it, and read its configuration, or choose **Open JSON snapshot** to work
+offline. The viewer provides:
+
+- a physical 4×4 knob layout for every detected bank, including eight-bank
+  firmware;
+- persistent active, inactive, and detent colors with authoritative stored
+  indices;
+- all decoded rotary, push, indicator, movement, detent, super-knob, global,
+  side-button, identity, firmware, warning, and raw-tag fields;
+- exact JSON download and offline snapshot import.
+
+The UI has a hard read-only Node/MIDI boundary, not merely disabled controls.
+Its server cannot construct an apply connection, exposes no mutation endpoint,
+and the transport permits only identity and configuration-pull SysEx. See
+[the UI architecture and development guide](docs/ui-architecture.md).
 
 The former `mft-export` executable remains as a compatibility alias for now.
 New scripts and documentation should use `mft-config`; the alias may be removed

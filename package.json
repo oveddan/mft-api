@@ -15,6 +15,8 @@
   "homepage": "https://github.com/oveddan/mft-api#readme",
   "files": [
     "dist/**/*.js",
+    "ui/**/*",
+    "docs/ui-architecture.md",
     "docs/write-safety.md",
     "schema/*.json",
     "README.md"
@@ -30,7 +32,8 @@
     "check": "npm run build && npm test",
     "prepare": "npm run build",
     "prepack": "npm run clean && npm run build",
-    "test:package": "node scripts/packed-artifact-smoke.mjs"
+    "test:package": "node scripts/packed-artifact-smoke.mjs",
+    "ui": "npm run build && node dist/ui-server.js"
   },
   "engines": {
     "node": ">=20"
