@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>MFT Config Viewer</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">MIDI Fighter Twister</p>
+        <h1>Config viewer</h1>
+      </div>
+      <span class="safety"><span aria-hidden="true">●</span> Strictly read-only</span>
+    </header>
+
+    <main>
+      <section class="toolbar panel" aria-labelledby="connect-title">
+        <div class="section-heading">
+          <div><p class="step">01</p><h2 id="connect-title">Choose a source</h2></div>
+          <p>Read a connected controller or inspect an export offline.</p>
+        </div>
+        <div class="controls">
+          <label>Connected device
+            <select id="device-select" aria-describedby="device-help"><option value="">Discover devices first</option></select>
+          </label>
+          <button id="discover-button" class="secondary">Discover</button>
+          <button id="read-button" disabled>Read configuration</button>
+          <button id="import-button" class="secondary">Open JSON snapshot</button>
+          <input id="import-input" type="file" accept="application/json,.json" hidden>
+          <button id="download-button" class="secondary" disabled>Download JSON</button>
+        </div>
+        <p id="device-help" class="hint">Discovery sends only the universal MIDI identity request.</p>
+        <div id="status" class="status" role="status" aria-live="polite">Ready. No controller has been read.</div>
+      </section>
+
+      <section id="empty-state" class="empty panel">
+        <div class="empty-mark" aria-hidden="true">16</div>
+        <div><h2>Your configuration will appear here</h2><p>The full 4×4 layout, every bank, raw protocol tags, and device identity stay visible without changing the controller.</p></div>
+      </section>
+
+      <div id="viewer" hidden>
+        <section class="identity panel" aria-labelledby="identity-title">
+          <div class="section-heading"><div><p class="step">02</p><h2 id="identity-title">Device</h2></div><p id="capture-source"></p></div>
+          <dl id="identity-fields" class="fact-grid"></dl>
+          <div id="warnings"></div>
+        </section>
+
+        <section class="controller panel" aria-labelledby="layout-title">
+          <div class="section-heading"><div><p class="step">03</p><h2 id="layout-title">Bank layout</h2></div><p>Select a knob for its complete decoded record.</p></div>
+          <div id="bank-tabs" class="bank-tabs" role="tablist" aria-label="Configuration banks"></div>
+          <div class="legend" aria-label="Color legend"><span><i class="active-dot"></i>Active</span><span><i class="inactive-dot"></i>Inactive</span><span><i class="detent-dot"></i>Detent</span></div>
+          <div class="controller-layout">
+            <div id="knob-grid" class="knob-grid" role="group" aria-label="4 by 4 encoder grid"></div>
+            <aside id="encoder-detail" class="detail" aria-live="polite"></aside>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="globals-title">
+          <div class="section-heading"><div><p class="step">04</p><h2 id="globals-title">Global settings</h2></div><p>Decoded values and their original tag map.</p></div>
+          <dl id="global-fields" class="fact-grid globals"></dl>
+          <h3>Side buttons</h3>
+          <div id="side-buttons" class="side-buttons"></div>
+          <details><summary>Raw global tags</summary><pre id="global-raw"></pre></details>
+        </section>
+
+        <section class="panel raw-panel" aria-labelledby="raw-title">
+          <div class="section-heading"><div><p class="step">05</p><h2 id="raw-title">Complete export</h2></div><p>The exact snapshot used by this view.</p></div>
+          <details><summary>Show raw JSON</summary><pre id="raw-json"></pre></details>
+        </section>
+      </div>
+    </main>
+    <footer>This local viewer has no plan, apply, reset, system, or bootloader route.</footer>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

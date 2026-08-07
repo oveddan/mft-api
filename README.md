@@ -34,6 +34,8 @@ MIDI channel, and MIDI number are independently configurable.
   It does not open MIDI ports.
 - `apply` writes an eligible plan, saves a backup first, and reads the entire
   controller back after every changed target to verify the result.
+- `ui` opens a local, visual, strictly read-only inspector for a connected
+  controller or a previously exported JSON snapshot.
 
 Only `apply` can write configuration. System commands, reset commands, and
 bootloader commands are always blocked. Live writes currently require firmware
@@ -47,11 +49,73 @@ Requirements:
 - a native MIDI toolchain supported by `@julusian/midi`
 - on Linux, the ALSA development package required by RtMidi
 
+Install the current GitHub version globally:
+
+```sh
+npm install --global --include=dev github:oveddan/mft-api
+```
+
+This installs the `mft-config` executable. GitHub source installs need
+`--include=dev` because their installation-time build uses TypeScript. Production
+installs that omit development dependencies should use a prebuilt tarball.
+
+You can also install a release tarball when one is available:
+
+```sh
+npm install --global ./oveddan-mft-config-0.1.0.tgz
+```
+
+Confirm the command is ready:
+
+```sh
+mft-config --help
+```
+
+## Visual read-only viewer
+
+Build and start the local viewer:
+
+```sh
+mft-config ui
+```
+
+Open the printed `http://127.0.0.1:4783` URL. Discover a connected Twister,
+select it, and read its configuration, or choose **Open JSON snapshot** to work
+offline. The viewer provides:
+
+- a physical 4×4 knob layout for every detected bank, including eight-bank
+  firmware;
+- persistent active, inactive, and detent colors with authoritative stored
+  indices;
+- all decoded rotary, push, indicator, movement, detent, super-knob, global,
+  side-button, identity, firmware, warning, and raw-tag fields;
+- exact JSON download and offline snapshot import.
+
+The UI has a hard read-only Node/MIDI boundary, not merely disabled controls.
+Its server cannot construct an apply connection, exposes no mutation endpoint,
+and the transport permits only identity and configuration-pull SysEx. See
+[the UI architecture and development guide](docs/ui-architecture.md).
+
+The former `mft-export` executable remains as a compatibility alias for now.
+New scripts and documentation should use `mft-config`; the alias may be removed
+in a future major release.
+
+The package is not published to the npm registry. This repository does not yet
+have an explicit host-tool license, so registry publishing remains blocked until
+the owner chooses and adds one. The package metadata deliberately uses
+`UNLICENSED` and `private: true` in the meantime. `UNLICENSED` does not grant
+permission to redistribute or modify the package; usage terms remain pending.
+Adding a license must include an explicit decision to keep or remove the
+`private` publish guard.
+
+### Contributor setup
+
 ```sh
 git clone https://github.com/oveddan/mft-api.git
 cd mft-api
 npm install
 npm run check
+npm link
 ```
 
 Build the CLI after making changes:
@@ -60,27 +124,27 @@ Build the CLI after making changes:
 npm run build
 ```
 
-The examples below use `node dist/cli.js`. After packaging or linking the npm
-binary, the equivalent command name is `mft-export`.
+`npm link` builds the source checkout and links `mft-config` for contributor
+testing. End-user commands use the installed executable.
 
 ## Read the controller
 
 List connected Twisters:
 
 ```sh
-node dist/cli.js list
+mft-config list
 ```
 
 Export the only connected device:
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 ```
 
 If more than one Twister is connected, use the index shown by `list`:
 
 ```sh
-node dist/cli.js export --device 1 --out twister-config.json
+mft-config export --device 1 --out twister-config.json
 ```
 
 The JSON includes the firmware and unit identity, detected bank count, all
@@ -232,9 +296,9 @@ minutes and are bound to the snapshot hash, firmware version, and device ID.
 ### Make the top row green when active and purple when inactive
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 
-node dist/cli.js plan \
+mft-config plan \
   --snapshot twister-config.json \
   --set bank.1.encoder.1.colors.active=green \
   --set bank.1.encoder.1.colors.inactive=purple \
@@ -246,7 +310,7 @@ node dist/cli.js plan \
   --set bank.1.encoder.4.colors.inactive=purple \
   --out patch-plan.json
 
-node dist/cli.js apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes
 ```
 
 ### Make the first two push switches toggle on and off
@@ -254,15 +318,15 @@ node dist/cli.js apply --plan patch-plan.json --yes
 Code `1` is `ccToggle`:
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 
-node dist/cli.js plan \
+mft-config plan \
   --snapshot twister-config.json \
   --set bank.1.encoder.1.switch.action.code=1 \
   --set bank.1.encoder.2.switch.action.code=1 \
   --out patch-plan.json
 
-node dist/cli.js apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes
 ```
 
 ### Change a knob's rotary and push MIDI mappings
@@ -271,9 +335,9 @@ This makes bank 2, encoder 5 send CC 20 on channel 3 when turned, and a
 momentary CC 40 on channel 4 when pressed:
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 
-node dist/cli.js plan \
+mft-config plan \
   --snapshot twister-config.json \
   --set bank.2.encoder.5.encoder.type.code=1 \
   --set bank.2.encoder.5.encoder.midiChannel=3 \
@@ -283,15 +347,15 @@ node dist/cli.js plan \
   --set bank.2.encoder.5.switch.midiNumber=40 \
   --out patch-plan.json
 
-node dist/cli.js apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes
 ```
 
 ### Set a velocity-sensitive spread indicator with a red detent
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 
-node dist/cli.js plan \
+mft-config plan \
   --snapshot twister-config.json \
   --set bank.3.encoder.9.movement.code=2 \
   --set bank.3.encoder.9.indicator.code=3 \
@@ -299,15 +363,15 @@ node dist/cli.js plan \
   --set bank.3.encoder.9.detent.color=red \
   --out patch-plan.json
 
-node dist/cli.js apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes
 ```
 
 ### Change global brightness and sleep behavior
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 
-node dist/cli.js plan \
+mft-config plan \
   --snapshot twister-config.json \
   --set global.brightness.rgb=96 \
   --set global.brightness.indicator=80 \
@@ -315,7 +379,7 @@ node dist/cli.js plan \
   --set global.sleep.animation.code=0 \
   --out patch-plan.json
 
-node dist/cli.js apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes
 ```
 
 Timeout index `4` means 10 minutes; sleep animation code `0` turns the lights
@@ -328,12 +392,18 @@ Before sending any configuration frame, `apply`:
 1. validates the plan hash and expiry;
 2. discovers the controller again and checks its identity and firmware;
 3. takes a fresh complete snapshot and rejects stale expected values;
-4. saves a timestamped JSON backup under `.mft-state/backups/`;
+4. saves a timestamped JSON backup under the per-user state directory;
 5. writes targets sequentially without automatic retries;
 6. reads the full configuration after every target and compares it with the
    expected state; and
 7. records pending, verified, failed, or unknown outcomes in an append-only
-   journal.
+journal.
+
+By default, backups, the single-use-plan journal, and the last verified snapshot
+are stored under `~/.mft-config/` (or `$XDG_STATE_HOME/mft-config/`). This stable
+location prevents changing the working directory from bypassing plan-consumption
+checks. Set `MFT_CONFIG_STATE_DIR` to choose an explicit alternative.
+The override must be an absolute path.
 
 Completed plans are single-use. See [`docs/write-safety.md`](docs/write-safety.md)
 for protocol-level details and remaining limitations.

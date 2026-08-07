@@ -1,16 +1,39 @@
 {
-  "name": "@djtechtools/mft-export",
+  "name": "@oveddan/mft-config",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Guarded MIDI Fighter Twister configuration exporter and planner",
+  "description": "Safely read, plan, and write MIDI Fighter Twister configuration",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oveddan/mft-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oveddan/mft-api/issues"
+  },
+  "homepage": "https://github.com/oveddan/mft-api#readme",
+  "files": [
+    "dist/**/*.js",
+    "ui/**/*",
+    "docs/ui-architecture.md",
+    "docs/write-safety.md",
+    "schema/*.json",
+    "README.md"
+  ],
   "bin": {
+    "mft-config": "./dist/cli.js",
     "mft-export": "./dist/cli.js"
   },
   "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "build": "tsc -p tsconfig.json",
     "test": "tsx --test test/*.test.ts",
-    "check": "npm run build && npm test"
+    "check": "npm run build && npm test",
+    "prepare": "npm run build",
+    "prepack": "npm run clean && npm run build",
+    "test:package": "node scripts/packed-artifact-smoke.mjs",
+    "ui": "npm run build && node dist/ui-server.js"
   },
   "engines": {
     "node": ">=20"
@@ -19,7 +42,9 @@
     "@julusian/midi": "^3.0.1"
   },
   "devDependencies": {
+    "@types/jsdom": "^28.0.3",
     "@types/node": "^24.0.0",
+    "jsdom": "^30.0.1",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0"
   }
