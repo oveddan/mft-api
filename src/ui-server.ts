@@ -74,6 +74,25 @@ function publicDevice(device: DeviceDescriptor, index: number): unknown {
   };
 }
 
+/**
+ * Only accept requests whose Host header names this server, so an unrelated page open
+ * in the user's browser can't reach the local MIDI-reading API cross-origin (directly,
+ * or via DNS rebinding to make the request appear same-origin).
+ */
+const ALLOWED_HOSTNAMES = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
+
+function isAllowedHost(request: IncomingMessage): boolean {
+  const header = request.headers.host;
+  if (!header) return false;
+  const separatorIndex = header.lastIndexOf(":");
+  const hostname = separatorIndex === -1 ? header : header.slice(0, separatorIndex);
+  const portPart = separatorIndex === -1 ? undefined : header.slice(separatorIndex + 1);
+  if (!ALLOWED_HOSTNAMES.has(hostname.toLowerCase())) return false;
+  const localPort = request.socket.localPort;
+  if (portPart === undefined || localPort === undefined) return false;
+  return Number(portPart) === localPort;
+}
+
 async function serveAsset(pathname: string, response: ServerResponse): Promise<boolean> {
   const asset = ASSETS.get(pathname);
   if (!asset) return false;
@@ -93,8 +112,17 @@ export function createUiServer(options: UiServerOptions = {}): Server {
   const backend = options.backend ?? new RtMidiReadOnlyBackend();
   const timeoutMs = options.timeoutMs ?? 750;
 
+  // Single-flight guard: /api/export opens a fresh pair of MIDI ports and matches
+  // replies purely on protocol tag, so two concurrent exports could open the same
+  // ports twice and let one request's replies satisfy the other, silently producing
+  // a corrupt snapshot. Only one export runs at a time; a concurrent request gets 409.
+  let exportInFlight = false;
+
   return createServer(async (request, response) => {
     try {
+      if (!isAllowedHost(request)) {
+        return json(response, 400, { error: { code: "INVALID_HOST", message: "Host header is not allowed" } });
+      }
       const url = new URL(request.url ?? "/", "http://localhost");
       if (url.pathname === "/api/devices") {
         if (request.method !== "GET") return json(response, 405, { error: { code: "METHOD_NOT_ALLOWED", message: "Only GET is allowed" } });
@@ -105,18 +133,53 @@ export function createUiServer(options: UiServerOptions = {}): Server {
         if (request.method !== "POST") return json(response, 405, { error: { code: "METHOD_NOT_ALLOWED", message: "Only POST is allowed" } });
         const body = await readJson(request);
         const deviceIndex = body.deviceIndex;
-        if (!Number.isInteger(deviceIndex) || (deviceIndex as number) < 0 || Object.keys(body).some((key) => key !== "deviceIndex")) {
-          return json(response, 400, { error: { code: "INVALID_REQUEST", message: "deviceIndex must be the only field and a non-negative integer" } });
+        const extraKeys = Object.keys(body).filter((key) => key !== "deviceIndex" && key !== "inputPort" && key !== "outputPort");
+        const inputPort = body.inputPort;
+        const outputPort = body.outputPort;
+        if (
+          !Number.isInteger(deviceIndex) ||
+          (deviceIndex as number) < 0 ||
+          (inputPort !== undefined && typeof inputPort !== "string") ||
+          (outputPort !== undefined && typeof outputPort !== "string") ||
+          extraKeys.length > 0
+        ) {
+          return json(response, 400, {
+            error: { code: "INVALID_REQUEST", message: "deviceIndex must be a non-negative integer; inputPort/outputPort, if present, must be strings" },
+          });
         }
-        const devices = await backend.discover(timeoutMs);
-        const device = devices[deviceIndex as number];
-        if (!device) return json(response, 409, { error: { code: "DEVICE_DISCONNECTED", message: "The selected Twister is no longer connected" } });
-        const connection = backend.connect(device);
+        if (exportInFlight) {
+          return json(response, 409, { error: { code: "EXPORT_IN_PROGRESS", message: "Another export is already reading the device; try again shortly" } });
+        }
+        exportInFlight = true;
         try {
-          const snapshot = await exportConfiguration(connection, device, { timeoutMs });
-          return json(response, 200, { snapshot });
+          const devices = await backend.discover(timeoutMs);
+          const device = devices[deviceIndex as number];
+          if (!device) return json(response, 409, { error: { code: "DEVICE_DISCONNECTED", message: "The selected Twister is no longer connected" } });
+          // Devices are re-discovered fresh on every export, and `deviceIndex` is only a
+          // position in that ordering. If the browser's earlier device list is stale
+          // (a device was unplugged/replugged in between), the array may have reordered
+          // and the same index would silently pick a different device. Re-checking the
+          // port names the browser saw at discovery time turns that into a clear error
+          // instead of a mislabeled (still read-only) export. This is not a perfect
+          // identity check across OS/driver quirks, but it is the cheap option; a fully
+          // robust fix would need a stable device key threaded through discovery.
+          if (
+            (inputPort !== undefined && inputPort !== device.inputPort.name) ||
+            (outputPort !== undefined && outputPort !== device.outputPort.name)
+          ) {
+            return json(response, 409, {
+              error: { code: "DEVICE_LIST_CHANGED", message: "The device list changed since it was last discovered; rescan and try again" },
+            });
+          }
+          const connection = backend.connect(device);
+          try {
+            const snapshot = await exportConfiguration(connection, device, { timeoutMs });
+            return json(response, 200, { snapshot });
+          } finally {
+            connection.close();
+          }
         } finally {
-          connection.close();
+          exportInFlight = false;
         }
       }
       if (url.pathname.startsWith("/api/")) return json(response, 404, { error: { code: "NOT_FOUND", message: "No such read-only API endpoint" } });
@@ -134,6 +197,17 @@ export function createUiServer(options: UiServerOptions = {}): Server {
   });
 }
 
+const LOCAL_ONLY_BIND_HOSTS = new Set(["127.0.0.1", "localhost", "::1"]);
+
+/** Binding to anything other than loopback exposes the read-only MIDI API to the network; docs already say this isn't recommended, so warn loudly. */
+export function warnIfNonLocalHost(host: string): void {
+  if (!LOCAL_ONLY_BIND_HOSTS.has(host.toLowerCase())) {
+    process.stderr.write(
+      `mft-config ui: WARNING binding to "${host}" exposes the local MIDI read-only API to the network. This is not recommended; prefer 127.0.0.1 or localhost.\n`,
+    );
+  }
+}
+
 export async function startUiServer(host = "127.0.0.1", port = 0): Promise<{ server: Server; url: string }> {
   const server = createUiServer();
   await new Promise<void>((resolve, reject) => {
@@ -148,6 +222,7 @@ export async function startUiServer(host = "127.0.0.1", port = 0): Promise<{ ser
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const host = process.env.MFT_CONFIG_UI_HOST ?? "127.0.0.1";
   const port = Number(process.env.MFT_CONFIG_UI_PORT ?? "4783");
+  warnIfNonLocalHost(host);
   startUiServer(host, port)
     .then(({ url }) => process.stdout.write(`MFT Config read-only UI: ${url}\n`))
     .catch((error: Error) => {

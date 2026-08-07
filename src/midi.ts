@@ -22,12 +22,40 @@ export interface MidiBackend {
   connectForApply(device: DeviceDescriptor): ConfigurationWriteConnection;
 }
 
+/**
+ * Permits either a read-only request or a configuration write. This is the guard used
+ * by {@link RtMidiApplyConnection}'s transport, which itself already applies the exact
+ * same checks before calling down to this layer (so the check here is redundant, i.e.
+ * idempotent, on that path) -- it exists so that if a future edit ever constructs
+ * `RtMidiPorts` directly, or adds a call site that bypasses the wrapper classes, the
+ * innermost layer still refuses to send an arbitrary/mutating message.
+ */
+function assertApplyRequest(message: ArrayLike<number>): void {
+  try {
+    assertReadOnlyRequest(message);
+    return;
+  } catch {
+    // fall through to the broader (write-permitting) check
+  }
+  assertConfigurationWrite(message);
+}
+
 class RtMidiPorts implements MidiConnection {
   private readonly input = new Input();
   private readonly output = new Output();
   private readonly handlers = new Set<MessageHandler>();
 
-  constructor(inputPort: number, outputPort: number) {
+  /**
+   * `guard` runs on every outbound message before it reaches the MIDI output, so this
+   * class is safe by default even if constructed outside the guarded wrapper classes
+   * below. It defaults to read-only; {@link RtMidiApplyConnection} passes the broader
+   * {@link assertApplyRequest} explicitly, since it is the one surface allowed to write.
+   */
+  constructor(
+    inputPort: number,
+    outputPort: number,
+    private readonly guard: (message: ArrayLike<number>) => void = assertReadOnlyRequest,
+  ) {
     this.input.ignoreTypes(false, true, true);
     this.input.on("message", (_deltaTime: number, message: number[]) => {
       for (const handler of this.handlers) handler([...message]);
@@ -37,6 +65,7 @@ class RtMidiPorts implements MidiConnection {
   }
 
   send(message: ArrayLike<number>): void {
+    this.guard(message);
     this.output.sendMessage(Array.from(message));
   }
 
@@ -74,7 +103,7 @@ class RtMidiApplyConnection implements ConfigurationWriteConnection {
   private readonly transport: MidiConnection;
 
   constructor(inputPort: number, outputPort: number) {
-    this.transport = new RtMidiPorts(inputPort, outputPort);
+    this.transport = new RtMidiPorts(inputPort, outputPort, assertApplyRequest);
   }
 
   send(message: ArrayLike<number>): void {

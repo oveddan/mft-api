@@ -28,7 +28,7 @@ function hexByte(value: number): string {
   return value.toString(16).padStart(2, "0").toUpperCase();
 }
 
-function bytesEqual(actual: ArrayLike<number>, expected: ArrayLike<number>): boolean {
+export function bytesEqual(actual: ArrayLike<number>, expected: ArrayLike<number>): boolean {
   if (actual.length !== expected.length) return false;
   return Array.from(actual).every((value, index) => value === expected[index]);
 }

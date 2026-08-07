@@ -9,7 +9,7 @@ const elements = Object.fromEntries([
 
 const state = { devices: [], snapshot: null, bank: 1, encoder: 1, source: "" };
 
-function assertSnapshot(value) {
+export function assertSnapshot(value) {
   if (!value || typeof value !== "object") throw new Error("Snapshot must be a JSON object.");
   if (value.schemaVersion !== "djtt.mft.config-export.v1") throw new Error("Unsupported snapshot schema. Expected djtt.mft.config-export.v1.");
   const bankCount = value.capabilities?.bankCount;
@@ -28,6 +28,23 @@ function assertSnapshot(value) {
     }
   }
   if (!value.device?.firmware?.date || !value.globals?.rawTags || !Array.isArray(value.globals.sideButtons) || !Array.isArray(value.warnings)) throw new Error("Snapshot is missing device, global, side-button, or warning fields.");
+  if (typeof value.capturedAt !== "string" || Number.isNaN(Date.parse(value.capturedAt))) throw new Error("Snapshot is missing a valid capturedAt timestamp.");
+  if (!value.device?.midiPorts || typeof value.device.midiPorts.input !== "string" || typeof value.device.midiPorts.output !== "string") throw new Error("Snapshot is missing device MIDI port names.");
+  if (!Array.isArray(value.device.firmware.identityBytes)) throw new Error("Snapshot is missing device firmware identity bytes.");
+  const globals = value.globals;
+  if (
+    typeof globals.colorMap?.name !== "string" ||
+    typeof globals.superKnob?.start !== "number" ||
+    typeof globals.superKnob?.end !== "number" ||
+    typeof globals.brightness?.rgb !== "number" ||
+    typeof globals.brightness?.indicator !== "number" ||
+    typeof globals.animationChannels?.encoder !== "number" ||
+    typeof globals.animationChannels?.switch !== "number" ||
+    !globals.sleep ||
+    typeof globals.sleep.timeoutIndex !== "number"
+  ) {
+    throw new Error("Snapshot is missing required global fields (colorMap, superKnob, brightness, animationChannels, or sleep).");
+  }
   return value;
 }
 
@@ -182,11 +199,32 @@ function renderGlobals() {
   elements["global-raw"].textContent = JSON.stringify(globals.rawTags, null, 2);
 }
 
-function renderSnapshot(snapshot, source) {
-  state.snapshot = assertSnapshot(snapshot); state.bank = snapshot.banks[0].number; state.encoder = 1; state.source = source;
-  elements["empty-state"].hidden = true; elements.viewer.hidden = false; elements["download-button"].disabled = false;
+function renderAll(snapshot) {
   renderIdentity(); renderBanks(); renderGrid(); renderGlobals();
   elements["raw-json"].textContent = JSON.stringify(snapshot, null, 2);
+}
+
+// Renders defensively: a snapshot is only committed to `state` and the viewer only
+// unhidden once every render function has run without throwing. If rendering the new
+// snapshot fails partway through (leaving the DOM with a mix of new and old content),
+// the previous good snapshot (or the empty state, if there was none) is redrawn from
+// scratch so the user never sees a spliced/corrupted view.
+export function renderSnapshot(snapshot, source) {
+  const validated = assertSnapshot(snapshot);
+  const previous = { snapshot: state.snapshot, bank: state.bank, encoder: state.encoder, source: state.source };
+  state.snapshot = validated; state.bank = validated.banks[0].number; state.encoder = 1; state.source = source;
+  try {
+    renderAll(snapshot);
+  } catch (error) {
+    state.snapshot = previous.snapshot; state.bank = previous.bank; state.encoder = previous.encoder; state.source = previous.source;
+    if (previous.snapshot) {
+      try { renderAll(previous.snapshot); } catch { /* best-effort restore; fall through to error below */ }
+    } else {
+      elements["empty-state"].hidden = false; elements.viewer.hidden = true; elements["download-button"].disabled = true;
+    }
+    throw new Error(`Snapshot could not be rendered: ${error.message}`);
+  }
+  elements["empty-state"].hidden = true; elements.viewer.hidden = false; elements["download-button"].disabled = false;
 }
 
 async function discover() {
@@ -208,9 +246,14 @@ async function discover() {
 async function readDevice() {
   const deviceIndex = Number(elements["device-select"].value);
   if (!Number.isInteger(deviceIndex)) return;
+  const selected = state.devices[deviceIndex];
   setStatus("Reading globals and every encoder. This can take a moment…"); elements["read-button"].disabled = true;
   try {
-    const { snapshot } = await api("/api/export", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ deviceIndex }) });
+    // inputPort/outputPort let the server confirm the device at this index hasn't
+    // changed since discovery (e.g. a controller was unplugged/replugged); if it
+    // has, the server rejects the request instead of silently reading the wrong one.
+    const body = { deviceIndex, ...(selected ? { inputPort: selected.inputPort, outputPort: selected.outputPort } : {}) };
+    const { snapshot } = await api("/api/export", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     renderSnapshot(snapshot, "Live controller"); setStatus(`Read all ${snapshot.capabilities.bankCount * 16} encoder records successfully.`, "success");
   } catch (error) { setStatus(error.message, "error"); }
   finally { elements["read-button"].disabled = state.devices.length === 0; }

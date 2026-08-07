@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import http from "node:http";
 import test from "node:test";
 
 import { ReadOnlyMidiConnection, RtMidiReadOnlyBackend, type MessageHandler, type MidiConnection } from "../src/midi.js";
@@ -97,6 +98,106 @@ test("UI server has no mutation route and never opens a connection for one", asy
     }
   });
   assert.equal(connections, 0);
+});
+
+test("concurrent /api/export requests do not race: the second is rejected instead of sharing a connection", async () => {
+  let connectionsOpened = 0;
+  let inFlightSends = 0;
+  let maxConcurrentSends = 0;
+
+  class SlowFakeConnection implements MidiConnection {
+    readonly sent: number[][] = [];
+    closed = false;
+    private readonly handlers = new Set<MessageHandler>();
+
+    send(message: ArrayLike<number>): void {
+      assertReadOnlyRequest(message);
+      const bytes = Array.from(message);
+      this.sent.push(bytes);
+      inFlightSends += 1;
+      maxConcurrentSends = Math.max(maxConcurrentSends, inFlightSends);
+      // Respond asynchronously so a second concurrent request's send() calls could
+      // interleave with this one's if there were no single-flight guard.
+      setTimeout(() => {
+        inFlightSends -= 1;
+        if (bytes[4] === 5) this.emit([0xf0, 0, 1, 0x79, 5, 1, 1, 2, 3, 4, 5, 6, 7, 8, 0xf7]);
+        if (bytes[4] === 2) this.emit([0xf0, 0, 1, 0x79, 2, 1, ...GLOBALS, 0xf7]);
+        if (bytes[4] === 4) {
+          const tag = bytes[6]!;
+          if (tag === 65) return this.emit([0xf0, 0, 1, 0x79, 4, 0, 65, 1, 1, 0, 0xf7]);
+          this.emit([0xf0, 0, 1, 0x79, 4, 0, tag, 1, 2, 24, ...ENCODER.slice(0, 24), 0xf7]);
+          this.emit([0xf0, 0, 1, 0x79, 4, 0, tag, 2, 2, 6, ...ENCODER.slice(24), 0xf7]);
+        }
+      }, 1);
+    }
+    subscribe(handler: MessageHandler): () => void { this.handlers.add(handler); return () => this.handlers.delete(handler); }
+    close(): void { this.closed = true; }
+    private emit(message: number[]): void { for (const handler of [...this.handlers]) handler(message); }
+  }
+
+  const backend: ReadOnlyBackend = {
+    discover: async () => [device],
+    connect: () => { connectionsOpened += 1; return new SlowFakeConnection(); },
+  };
+
+  await withServer(backend, async (base) => {
+    const request = () => fetch(`${base}/api/export`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ deviceIndex: 0 }) });
+    const [first, second] = await Promise.all([request(), request()]);
+    const statuses = [first.status, second.status].sort();
+    // Exactly one request wins and reads a complete snapshot; the other is rejected
+    // with 409 rather than being served from a second, concurrently-opened connection
+    // whose replies could interleave with the first (matched only by protocol tag).
+    assert.deepEqual(statuses, [200, 409]);
+    const rejected = first.status === 409 ? first : second;
+    assert.equal((await rejected.json() as { error: { code: string } }).error.code, "EXPORT_IN_PROGRESS");
+    assert.equal(connectionsOpened, 1);
+  });
+
+  // A follow-up export after the first completes should succeed normally (the guard
+  // releases once the in-flight export finishes, it doesn't wedge the server).
+  const backend2: ReadOnlyBackend = { discover: async () => [device], connect: () => new SlowFakeConnection() };
+  await withServer(backend2, async (base) => {
+    const response = await fetch(`${base}/api/export`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ deviceIndex: 0 }) });
+    assert.equal(response.status, 200);
+  });
+});
+
+test("/api/export rejects a request whose inputPort/outputPort no longer match the freshly discovered device", async () => {
+  const connection = new FakeReadOnlyConnection();
+  const backend: ReadOnlyBackend = { discover: async () => [device], connect: () => connection };
+  await withServer(backend, async (base) => {
+    const response = await fetch(`${base}/api/export`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ deviceIndex: 0, inputPort: "Some Other Device In", outputPort: "Twister Out" }),
+    });
+    assert.equal(response.status, 409);
+    assert.equal((await response.json() as { error: { code: string } }).error.code, "DEVICE_LIST_CHANGED");
+  });
+});
+
+test("requests with a Host header that does not name this server are rejected", async () => {
+  // fetch() refuses to let callers override the Host header (undici derives it from the
+  // URL), so this exercises the real attack surface -- an arbitrary Host header sent over
+  // the wire, e.g. by DNS rebinding or a raw client -- with a low-level http.request.
+  const backend: ReadOnlyBackend = { discover: async () => [device], connect: () => new FakeReadOnlyConnection() };
+  await withServer(backend, async (base) => {
+    const { port } = new URL(base);
+    const body = await new Promise<{ status: number; json: { error: { code: string } } }>((resolvePromise, reject) => {
+      const request = http.request(
+        { host: "127.0.0.1", port: Number(port), path: "/api/devices", method: "GET", headers: { host: "evil.example:80" } },
+        (response) => {
+          const chunks: Buffer[] = [];
+          response.on("data", (chunk) => chunks.push(chunk));
+          response.on("end", () => resolvePromise({ status: response.statusCode!, json: JSON.parse(Buffer.concat(chunks).toString("utf8")) }));
+        },
+      );
+      request.on("error", reject);
+      request.end();
+    });
+    assert.equal(body.status, 400);
+    assert.equal(body.json.error.code, "INVALID_HOST");
+  });
 });
 
 test("UI server reports permission, malformed, partial, and disconnected reads clearly", async () => {

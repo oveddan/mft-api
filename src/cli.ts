@@ -126,10 +126,12 @@ async function main(): Promise<void> {
   }
 
   if (args.command === "ui") {
-    const { startUiServer } = await import("./ui-server.js");
+    const { startUiServer, warnIfNonLocalHost } = await import("./ui-server.js");
     const host = process.env.MFT_CONFIG_UI_HOST ?? "127.0.0.1";
     const port = Number(process.env.MFT_CONFIG_UI_PORT ?? "4783");
     if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error("MFT_CONFIG_UI_PORT must be an integer from 0 to 65535");
+    if (host.trim() === "") throw new Error("MFT_CONFIG_UI_HOST must not be empty");
+    warnIfNonLocalHost(host);
     const { url } = await startUiServer(host, port);
     process.stdout.write(`MFT Config read-only UI: ${url}\n`);
     return;

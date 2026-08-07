@@ -4,7 +4,9 @@ import { encoderTransferTag, firmwarePolicy } from "./compatibility.js";
 import type { MidiConnection } from "./midi.js";
 import {
   assembleBulkParts,
+  bytesEqual,
   bytesToHex,
+  DJTT_HEADER,
   getDeviceIdRequest,
   parseBulkPart,
   parseDeviceIdResponse,
@@ -14,6 +16,13 @@ import {
   pullGlobalsRequest,
   type BulkPart,
 } from "./protocol.js";
+
+/** True when `message` carries the DJ TechTools SysEx vendor header, i.e. it is
+ * plausibly a Twister reply rather than unrelated SysEx traffic from another device
+ * sharing the bus. */
+function isDjttMessage(message: number[]): boolean {
+  return message.length >= 4 && bytesEqual(message.slice(0, 4), DJTT_HEADER);
+}
 import { findUsbSerial } from "./usb.js";
 
 interface ExportOptions {
@@ -67,7 +76,7 @@ async function pullGlobals(connection: MidiConnection, timeoutMs: number, retrie
       waitForMessage(
         connection,
         () => connection.send(pullGlobalsRequest()),
-        (message) => message[4] === 0x02 ? parseGlobalResponse(message) : undefined,
+        (message) => isDjttMessage(message) && message[4] === 0x02 ? parseGlobalResponse(message) : undefined,
         timeoutMs,
       ),
     retries,
@@ -81,7 +90,7 @@ async function pullDeviceId(connection: MidiConnection, timeoutMs: number): Prom
       connection,
       () => connection.send(getDeviceIdRequest()),
       (message) => {
-        if (message[4] !== 0x05) return undefined;
+        if (!isDjttMessage(message) || message[4] !== 0x05) return undefined;
         return parseDeviceIdResponse(message);
       },
       timeoutMs,
@@ -108,6 +117,7 @@ async function pullEncoderData(
           reject(malformed ?? new Error(`Timed out after ${timeoutMs} ms`));
         }, timeoutMs);
         const unsubscribe = connection.subscribe((message) => {
+          if (!isDjttMessage(message) || message[4] !== 0x04) return;
           try {
             const part = parseBulkPart(message);
             if (part.tag !== tag) return;
@@ -119,7 +129,7 @@ async function pullEncoderData(
             unsubscribe();
             resolve(assembleBulkParts([...parts.values()]));
           } catch (error) {
-            if (message[4] === 0x04) malformed = error as Error;
+            malformed = error as Error;
           }
         });
         connection.send(pullEncoderRequest(tag));
