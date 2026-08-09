@@ -50,17 +50,17 @@ Requirements:
 ```sh
 git clone https://github.com/oveddan/mft-api.git
 cd mft-api
-npm install
-npm run check
+pnpm install
+pnpm run check
 ```
 
 Build the CLI after making changes:
 
 ```sh
-npm run build
+pnpm run build
 ```
 
-The examples below use `node dist/cli.js`. After packaging or linking the npm
+The examples below use `node dist/cli.js`. After packaging or linking the
 binary, the equivalent command name is `mft-export`.
 
 ## Read the controller
