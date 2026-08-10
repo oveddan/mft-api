@@ -2,15 +2,17 @@
   "name": "@djtechtools/mft-export",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Guarded MIDI Fighter Twister configuration exporter and planner",
+  "packageManager": "pnpm@10.33.2",
   "bin": {
     "mft-export": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "tsx --test test/*.test.ts",
-    "check": "npm run build && npm test"
+    "check": "tsc -p tsconfig.json && tsx --test test/*.test.ts"
   },
   "engines": {
     "node": ">=20"
@@ -22,5 +24,11 @@
     "@types/node": "^24.0.0",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@julusian/midi",
+      "esbuild"
+    ]
   }
 }
