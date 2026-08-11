@@ -4,6 +4,8 @@ import { exportConfiguration } from "./exporter.js";
 import { appendJournal } from "./journal.js";
 import { assertValidPlan, expectedSnapshotAfterChanges, type PatchPlan } from "./planner.js";
 import { snapshotHash } from "./snapshot.js";
+import { encodeGlobalDryRun } from "./write-codec.js";
+import { firmwarePolicy } from "./compatibility.js";
 
 interface ApplyOptions {
   journalPath: string;
@@ -76,6 +78,25 @@ export async function applyPatchPlan(
     await appendJournal(options.journalPath, { planId: plan.planId, outcome: "verified", target });
     progressive = observed;
   }
+
+  // Firmware disables the LED display while receiving an encoder bulk-transfer
+  // write and only re-enables it from the confirmation animation fired by a
+  // global-settings write (or a USB replug). Without this, encoder-only plans
+  // leave the display dark until the device is unplugged and replugged.
+  if (targets.some((target) => target !== "globals")) {
+    const policy = firmwarePolicy(device.identity.firmwareDate);
+    const [refreshFrame] = encodeGlobalDryRun(progressive.globals.rawTags, policy);
+    await appendJournal(options.journalPath, {
+      planId: plan.planId,
+      outcome: "pending",
+      target: "globals",
+      frameHex: refreshFrame!.hex,
+      detail: "display re-enable after encoder write",
+    });
+    connection.sendConfigurationWrite(refreshFrame!.bytes);
+    await delay(pacingMs);
+  }
+
   await appendJournal(options.journalPath, { planId: plan.planId, outcome: "complete" });
   return { backupPath, postSnapshot: progressive };
 }

@@ -17,6 +17,7 @@ const BASE_ENCODER = [10, 0, 11, 0, 12, 1, 13, 2, 14, 0, 15, 0, 16, 1, 17, 0, 18
 class FakeWritableTwister implements ConfigurationWriteConnection {
   private readonly handlers = new Set<MessageHandler>();
   private readonly encoders = new Map<number, number[]>();
+  private globals: number[] = [...GLOBALS];
 
   constructor() {
     for (let tag = 1; tag <= 64; tag += 1) this.encoders.set(tag, [...BASE_ENCODER]);
@@ -26,7 +27,7 @@ class FakeWritableTwister implements ConfigurationWriteConnection {
     assertReadOnlyRequest(message);
     const bytes = Array.from(message);
     if (bytes[4] === 5) this.emit([0xf0, 0, 1, 0x79, 5, 1, 1, 2, 3, 4, 5, 6, 7, 8, 0xf7]);
-    if (bytes[4] === 2) this.emit([0xf0, 0, 1, 0x79, 2, 1, ...GLOBALS, 0xf7]);
+    if (bytes[4] === 2) this.emit([0xf0, 0, 1, 0x79, 2, 1, ...this.globals, 0xf7]);
     if (bytes[4] === 4) {
       const requested = bytes[6]!;
       if (requested === 65) {
@@ -43,7 +44,15 @@ class FakeWritableTwister implements ConfigurationWriteConnection {
   sendConfigurationWrite(message: ArrayLike<number>): void {
     assertConfigurationWrite(message);
     const bytes = Array.from(message);
-    if (bytes[4] !== 4) throw new Error("Test only supports encoder writes");
+    if (bytes[4] === 1) {
+      const current = new Map<number, number>();
+      for (let index = 0; index < this.globals.length; index += 2) current.set(this.globals[index]!, this.globals[index + 1]!);
+      const data = bytes.slice(5, -1);
+      for (let index = 0; index < data.length; index += 2) current.set(data[index]!, data[index + 1]!);
+      this.globals = [...current.entries()].sort(([a], [b]) => a - b).flatMap(([tag, value]) => [tag, value]);
+      return;
+    }
+    if (bytes[4] !== 4) throw new Error("Test only supports global and encoder writes");
     const ordinal = bytes[6] === 0 ? 64 : bytes[6]!;
     const current = new Map<number, number>();
     const stored = this.encoders.get(ordinal)!;
