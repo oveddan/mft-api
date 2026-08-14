@@ -20,69 +20,67 @@
       ]
     },
     "unitId": {
-      "source": "synthetic",
+      "source": "sysex-0x05",
       "hex": "0000000000000000"
     },
     "midiPorts": {
-      "input": "Midi Fighter Twister",
-      "output": "Midi Fighter Twister"
-    },
-    "inputPort": "Synthetic Twister",
-    "outputPort": "Synthetic Twister"
+      "input": "Synthetic Twister",
+      "output": "Synthetic Twister"
+    }
   },
   "capabilities": {
     "bankCount": 4,
     "encodersPerBank": 16
   },
   "globals": {
-    "midiChannel": 4,
-    "sideButtonsBanked": true,
+    "midiChannel": 1,
+    "sideButtonsBanked": false,
     "sideButtons": [
       {
         "number": 1,
         "action": {
-          "code": 1,
-          "name": "ccToggle"
+          "code": 0,
+          "name": "ccHold"
         }
       },
       {
         "number": 2,
         "action": {
-          "code": 7,
-          "name": "shiftPage2Toggle"
+          "code": 0,
+          "name": "ccHold"
         }
       },
       {
         "number": 3,
         "action": {
-          "code": 1,
-          "name": "ccToggle"
+          "code": 0,
+          "name": "ccHold"
         }
       },
       {
         "number": 4,
         "action": {
-          "code": 1,
-          "name": "ccToggle"
+          "code": 0,
+          "name": "ccHold"
         }
       },
       {
         "number": 5,
         "action": {
-          "code": 6,
-          "name": "shiftPage1Toggle"
+          "code": 0,
+          "name": "ccHold"
         }
       },
       {
         "number": 6,
         "action": {
-          "code": 1,
-          "name": "ccToggle"
+          "code": 0,
+          "name": "ccHold"
         }
       }
     ],
     "superKnob": {
-      "start": 63,
+      "start": 0,
       "end": 127
     },
     "brightness": {
@@ -94,37 +92,37 @@
       "name": "classic"
     },
     "animationChannels": {
-      "encoder": 6,
-      "switch": 3
+      "encoder": 1,
+      "switch": 1
     },
     "sleep": {
-      "timeoutIndex": 7,
-      "timeoutMinutes": 60,
+      "timeoutIndex": 0,
+      "timeoutMinutes": 0,
       "animation": {
-        "code": 1,
-        "name": "rainbowWave"
+        "code": 0,
+        "name": "lightsOff"
       }
     },
-    "bankAnimationsEnabled": false,
+    "bankAnimationsEnabled": true,
     "rawTags": {
-      "0": 4,
-      "1": 1,
-      "2": 1,
-      "3": 7,
-      "4": 1,
-      "5": 1,
-      "6": 6,
-      "7": 1,
-      "8": 63,
+      "0": 1,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
       "9": 127,
       "31": 127,
       "32": 127,
       "33": 0,
-      "34": 6,
-      "35": 3,
-      "36": 7,
-      "37": 1,
-      "38": 0
+      "34": 1,
+      "35": 1,
+      "36": 0,
+      "37": 0,
+      "38": 1
     }
   },
   "banks": [
@@ -135,7 +133,7 @@
           "number": 1,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -143,28 +141,28 @@
           },
           "switch": {
             "action": {
-              "code": 1,
-              "name": "ccToggle"
+              "code": 0,
+              "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 0
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 0,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
             "active": 43,
-            "inactive": 107
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -182,14 +180,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 2,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -197,28 +195,28 @@
           },
           "switch": {
             "action": {
-              "code": 1,
-              "name": "ccToggle"
+              "code": 0,
+              "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 1
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 1,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
             "active": 43,
-            "inactive": 107
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -236,14 +234,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 3,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -254,25 +252,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 2
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 2,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
             "active": 43,
-            "inactive": 107
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -290,14 +288,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 4,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -308,25 +306,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 3
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 3,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
             "active": 43,
-            "inactive": 107
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -344,14 +342,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 5,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -362,25 +360,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 4
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 4,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 5
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -398,14 +396,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 6,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -416,25 +414,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 5
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 5,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 5
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -452,14 +450,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 7,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -470,25 +468,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 6
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 6,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 5
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -506,14 +504,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 8,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -524,25 +522,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 7
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 7,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 5
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -560,14 +558,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 9,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -575,28 +573,28 @@
           },
           "switch": {
             "action": {
-              "code": 1,
-              "name": "ccToggle"
+              "code": 0,
+              "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 8
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 8,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 127,
-            "inactive": 64
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -614,14 +612,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 10,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -632,25 +630,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 9
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 9,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 127,
-            "inactive": 64
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -668,14 +666,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 11,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -686,25 +684,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 10
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 10,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 127,
-            "inactive": 64
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -722,14 +720,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 12,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -740,25 +738,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 11
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 11,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 127,
-            "inactive": 64
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -776,14 +774,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 13,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -794,25 +792,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 12
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 12,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 127,
-            "inactive": 85
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -830,14 +828,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 14,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -848,25 +846,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 13
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 13,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 127,
-            "inactive": 85
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -884,14 +882,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 15,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -902,25 +900,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 14
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 14,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 64
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -938,14 +936,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 16,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -956,25 +954,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 15
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 15,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 5
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -992,7 +990,7 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         }
       ]
@@ -1004,7 +1002,7 @@
           "number": 1,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1015,25 +1013,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 16
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 16,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 62
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1051,14 +1049,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 2,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1069,25 +1067,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 17
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 17,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1105,14 +1103,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 3,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1123,25 +1121,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 18
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 18,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1159,14 +1157,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 4,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1177,25 +1175,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 19
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 19,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1213,14 +1211,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 5,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1231,25 +1229,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 20
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 20,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1267,14 +1265,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 6,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1285,25 +1283,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 21
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 21,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1321,14 +1319,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 7,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1339,25 +1337,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 22
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 22,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1375,14 +1373,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 8,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1393,25 +1391,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 23
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 23,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1429,14 +1427,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 9,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1447,25 +1445,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 24
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 24,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1483,14 +1481,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 10,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1501,25 +1499,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 25
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 25,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1537,14 +1535,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 11,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1555,25 +1553,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 26
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 26,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1591,14 +1589,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 12,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1609,25 +1607,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 27
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 27,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1645,14 +1643,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 13,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1663,25 +1661,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 28
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 28,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1699,14 +1697,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 14,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1717,25 +1715,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 29
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 29,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1753,14 +1751,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 15,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1771,25 +1769,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 30
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 30,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1807,14 +1805,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 16,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1825,25 +1823,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 31
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 31,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 84
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1861,7 +1859,7 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         }
       ]
@@ -1873,7 +1871,7 @@
           "number": 1,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1884,25 +1882,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 32
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 32,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1920,14 +1918,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 2,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1938,25 +1936,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 33
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 33,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -1974,14 +1972,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 3,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -1992,25 +1990,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 34
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 34,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2028,14 +2026,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 4,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2046,25 +2044,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 35
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 35,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2082,14 +2080,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 5,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2100,25 +2098,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 36
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 36,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2136,14 +2134,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 6,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2154,25 +2152,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 37
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 37,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2190,14 +2188,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 7,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2208,25 +2206,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 38
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 38,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2244,14 +2242,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 8,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2262,25 +2260,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 39
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 39,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2298,14 +2296,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 9,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2316,25 +2314,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 40
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 40,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2352,14 +2350,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 10,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2370,25 +2368,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 41
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 41,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2406,14 +2404,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 11,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2424,25 +2422,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 42
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 42,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2460,14 +2458,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 12,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2478,25 +2476,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 43
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 43,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2514,14 +2512,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 13,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2532,25 +2530,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 44
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 44,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2568,14 +2566,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 14,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2586,25 +2584,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 45
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 45,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2622,14 +2620,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 15,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2640,25 +2638,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 46
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 46,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2676,14 +2674,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 16,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2694,25 +2692,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 47
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 47,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 53
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2730,7 +2728,7 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         }
       ]
@@ -2742,7 +2740,7 @@
           "number": 1,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2753,25 +2751,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 48
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 48,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2789,14 +2787,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 2,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2807,25 +2805,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 49
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 49,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2843,14 +2841,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 3,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2861,25 +2859,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 50
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 50,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2897,14 +2895,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 4,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2915,25 +2913,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 51
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 51,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -2951,14 +2949,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 5,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -2969,25 +2967,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 52
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 52,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -3005,14 +3003,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 6,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -3023,25 +3021,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 53
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 53,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -3059,14 +3057,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 7,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -3077,25 +3075,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 54
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 54,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -3113,14 +3111,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 8,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -3131,25 +3129,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 55
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 55,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -3167,14 +3165,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 9,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -3185,25 +3183,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 56
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 56,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -3221,14 +3219,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 10,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -3239,25 +3237,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 57
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 57,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -3275,14 +3273,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 11,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -3293,25 +3291,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 58
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 58,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -3329,14 +3327,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 12,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -3347,25 +3345,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 59
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 59,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -3383,14 +3381,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 13,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -3401,25 +3399,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 60
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 60,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -3437,14 +3435,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 14,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -3455,25 +3453,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 61
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 61,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -3491,14 +3489,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 15,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -3509,25 +3507,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 62
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 62,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -3545,14 +3543,14 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         },
         {
           "number": 16,
           "detent": {
             "enabled": false,
-            "color": 63
+            "color": 64
           },
           "movement": {
             "code": 0,
@@ -3563,25 +3561,25 @@
               "code": 0,
               "name": "ccHold"
             },
-            "midiChannel": 2,
+            "midiChannel": 1,
             "midiNumber": 63
           },
           "encoder": {
             "midiChannel": 1,
-            "shiftedMidiChannel": 5,
+            "shiftedMidiChannel": 1,
             "midiNumber": 63,
             "type": {
-              "code": 1,
-              "name": "cc"
+              "code": 0,
+              "name": "note"
             }
           },
           "colors": {
-            "active": 25,
-            "inactive": 13
+            "active": 43,
+            "inactive": 0
           },
           "indicator": {
-            "code": 2,
-            "name": "blendedBar"
+            "code": 0,
+            "name": "dot"
           },
           "superKnobEnabled": false,
           "rawTags": {
@@ -3599,7 +3597,7 @@
             "21": 64,
             "22": 0,
             "23": 0,
-            "24": 5
+            "24": 1
           }
         }
       ]
