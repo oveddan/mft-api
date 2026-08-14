@@ -58,15 +58,22 @@ jobs:
 
       # `--help` returns before the dynamic import of ./midi.js, so it never
       # loads the native addon and would not catch a broken or missing prebuild.
-      # Load it explicitly and open a port count.
+      #
+      # verifyLibraryLoaded() forces the prebuilt .node to be resolved and
+      # dlopen'd, which is the thing worth testing. Constructing an Input would
+      # additionally require a working MIDI backend, and hosted Linux runners
+      # have no ALSA sequencer (`/dev/snd/seq` is absent), so that fails for a
+      # reason unrelated to whether the package shipped correctly.
       - name: Native MIDI addon loads
         shell: bash
         working-directory: ${{ runner.temp }}/smoke
         run: |
           node -e "
             import('@julusian/midi').then((m) => {
-              const count = new m.default.Input().getPortCount();
-              console.log('midi addon loaded; input ports:', count);
+              const midi = m.default ?? m;
+              midi.verifyLibraryLoaded();
+              if (typeof midi.Input !== 'function') throw new Error('Input export missing');
+              console.log('native midi addon loaded and verified');
             }).catch((error) => { console.error(error); process.exit(1); });
           "
 
