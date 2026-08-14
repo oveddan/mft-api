@@ -39,7 +39,7 @@ Changing `global.colorMap.code` reinterprets every stored color index and can re
 Example: make the top row of bank 1 green while active and purple while inactive:
 
 ```sh
-node dist/cli.js plan --snapshot twister-config.json \
+mft-config plan --snapshot twister-config.json \
   --set bank.1.encoder.1.colors.active=green \
   --set bank.1.encoder.1.colors.inactive=purple \
   --set bank.1.encoder.2.colors.active=green \
@@ -75,7 +75,7 @@ Side-button actions are exported but are not currently supported planner paths. 
 Make push switches 1 and 2 in bank 1 toggle CC values:
 
 ```sh
-node dist/cli.js plan --snapshot twister-config.json \
+mft-config plan --snapshot twister-config.json \
   --set bank.1.encoder.1.switch.action.code=1 \
   --set bank.1.encoder.2.switch.action.code=1 \
   --out patch-plan.json
@@ -84,7 +84,7 @@ node dist/cli.js plan --snapshot twister-config.json \
 Map bank 2 encoder 5 rotation to CC 74 on channel 3 and its push to note 60 on channel 10:
 
 ```sh
-node dist/cli.js plan --snapshot twister-config.json \
+mft-config plan --snapshot twister-config.json \
   --set bank.2.encoder.5.encoder.type.code=1 \
   --set bank.2.encoder.5.encoder.midiChannel=3 \
   --set bank.2.encoder.5.encoder.midiNumber=74 \

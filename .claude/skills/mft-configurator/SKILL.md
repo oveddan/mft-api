@@ -5,28 +5,41 @@ description: Safely discover, inspect, export, and explicitly configure a DJ Tec
 
 # MIDI Fighter Twister Configurator
 
-Operate the repository's `mft-export` CLI from its repository root. Treat the connected controller as user-owned hardware: inspect by default and mutate only after explicit authorization.
+Operate the `mft-config` CLI. Treat the connected controller as user-owned hardware: inspect by default and mutate only after explicit authorization.
 
 ## Prepare the CLI
 
-1. Locate the `mft-api` checkout and `cd` to its root. If its location is unknown, ask the user; do not run from an arbitrary directory.
-2. Confirm the repository with `git status -sb` and `npm pkg get name`; expect `@djtechtools/mft-export`.
-3. Run `npm ci` only when dependencies are absent or stale.
-4. Run `npm run build` before using `node dist/cli.js`.
-5. Use only the exact ignored artifact names `twister-config.json` and `patch-plan.json`. The unit ID and complete mapping in a snapshot are private device data.
-6. Check `git status -sb` after operating the device; keep `dist/`, both artifacts, and `.mft-state/` uncommitted.
+The CLI is published to npm. No checkout, no build.
 
-Running from the repository root is safety-critical: `.mft-state/` backups and the single-use plan journal are relative to the current working directory.
+1. Prefer an installed `mft-config` on `PATH`. Check with `mft-config --help`.
+2. If it is absent, use `npx -y mft-config …` in its place throughout this skill. Do not clone or build the repository to obtain it.
 
-Do not invent raw SysEx or bypass `src/protocol.ts`, `src/planner.ts`, or `src/applier.ts`.
+**Pick one working directory and stay in it.** This is safety-critical and easy
+to get wrong now that there is no repository root to anchor to:
+
+- `.mft-state/` — the write backups and the **single-use plan journal** — is
+  created relative to the current working directory.
+- Running `apply` from a different directory than a previous `apply` consults a
+  *different journal*, which silently defeats the single-use guarantee that
+  stops a plan from being replayed.
+- So: ask the user for a working directory once, `cd` there, and run every
+  `export`, `plan`, and `apply` from that same directory for the whole session.
+  If you cannot establish one, say so rather than guessing.
+
+Use only the artifact names `twister-config.json` and `patch-plan.json`. The
+unit ID and complete mapping in a snapshot are private device data — do not
+commit, publish, or paste them.
+
+Do not invent raw SysEx, and do not reach around the CLI to the device. The
+`plan` and `apply` commands are the entire write boundary.
 
 ## Inspect without changing the device
 
 Use only these commands for read-only requests:
 
 ```sh
-node dist/cli.js list
-node dist/cli.js export --device 0 --out twister-config.json
+mft-config list
+mft-config export --device 0 --out twister-config.json
 ```
 
 Omit `--device 0` only when exactly one Twister is connected. Device indices reflect current port order, not stable identity. Use `--timeout <milliseconds>` when the default 500 ms is too short.
@@ -50,7 +63,7 @@ Proceed only when the user explicitly asks to change settings. Before constructi
 3. Create a plan offline; this does not open MIDI ports:
 
 ```sh
-node dist/cli.js plan \
+mft-config plan \
   --snapshot twister-config.json \
   --set bank.1.encoder.1.colors.active=green \
   --out patch-plan.json
@@ -65,8 +78,8 @@ Plans expire after 15 minutes. If the plan expired or the device may have change
 Require an explicit user instruction to apply the reviewed plan to the physical controller. Do not apply a plan created for a merely hypothetical request. Before confirmation, disclose that the CLI has no restore command: its backup JSON is a record, not an automated recovery path. A failed or unknown apply may require the vendor Twister Utility or manual reconfiguration.
 
 ```sh
-node dist/cli.js list --timeout 1500
-node dist/cli.js apply --plan patch-plan.json --yes --device 0 --timeout 1500
+mft-config list --timeout 1500
+mft-config apply --plan patch-plan.json --yes --device 0 --timeout 1500
 ```
 
 Preserve these invariants:

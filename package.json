@@ -1,18 +1,36 @@
 {
-  "name": "@djtechtools/mft-export",
+  "name": "mft-config",
   "version": "0.1.0",
-  "private": true,
   "license": "MIT",
   "type": "module",
   "description": "Guarded MIDI Fighter Twister configuration exporter and planner",
+  "keywords": [
+    "midi-fighter-twister",
+    "midi",
+    "sysex",
+    "djtechtools",
+    "cli"
+  ],
+  "homepage": "https://github.com/oveddan/mft-api#readme",
+  "bugs": "https://github.com/oveddan/mft-api/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oveddan/mft-api.git"
+  },
   "packageManager": "pnpm@10.33.2",
   "bin": {
+    "mft-config": "./dist/cli.js",
     "mft-export": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "schema"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "tsx --test test/*.test.ts",
-    "check": "tsc -p tsconfig.json && tsx --test test/*.test.ts"
+    "check": "tsc -p tsconfig.json && tsx --test test/*.test.ts",
+    "prepack": "pnpm run check"
   },
   "engines": {
     "node": ">=20"

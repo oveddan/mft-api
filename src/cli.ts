@@ -22,10 +22,10 @@ interface Arguments {
 
 function usage(): string {
   return `Usage:
-  mft-export list [--timeout <milliseconds>]
-  mft-export export [--device <index>] [--out <file>] [--timeout <milliseconds>]
-  mft-export plan --snapshot <config.json> --set <path=value> [--set <path=value>] [--out <file>]
-  mft-export apply --plan <patch-plan.json> --yes [--device <index>]
+  mft-config list [--timeout <milliseconds>]
+  mft-config export [--device <index>] [--out <file>] [--timeout <milliseconds>]
+  mft-config plan --snapshot <config.json> --set <path=value> [--set <path=value>] [--out <file>]
+  mft-config apply --plan <patch-plan.json> --yes [--device <index>]
 
 This tool only sends Universal Identity, global pull (0x02), encoder bulk-pull
 (0x04/0x01), and device-ID pull (0x05) messages. The plan command is offline.
@@ -186,6 +186,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: Error) => {
-  process.stderr.write(`mft-export: ${error.message}\n`);
+  process.stderr.write(`mft-config: ${error.message}\n`);
   process.exitCode = 1;
 });

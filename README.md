@@ -74,15 +74,15 @@ Underneath, the agent is driving the CLI documented below. Nothing is hidden —
 work by hand looks like this:
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 
-node dist/cli.js plan \
+mft-config plan \
   --snapshot twister-config.json \
   --set bank.1.encoder.1.colors.active=green \
   --set bank.1.encoder.1.colors.inactive=purple \
   --out patch-plan.json
 
-node dist/cli.js apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes
 ```
 
 ## What this is not
@@ -130,46 +130,45 @@ bootloader commands are always blocked. Live writes currently require firmware
 
 ## Install
 
-Requirements:
-
-- Node.js 20 or newer
-- a native MIDI toolchain supported by `@julusian/midi`
-- on Linux, the ALSA development package required by RtMidi
+Requires Node.js 20 or newer. Prebuilt MIDI binaries ship for macOS, Windows,
+and Linux, so no compiler is needed on common platforms.
 
 ```sh
-git clone https://github.com/oveddan/mft-api.git
-cd mft-api
-pnpm install
-pnpm run check
+npm install -g mft-config
 ```
 
-Build the CLI after making changes:
+Or run it without installing anything:
 
 ```sh
-pnpm run build
+npx -y mft-config list
 ```
 
-The examples below use `node dist/cli.js`. After packaging or linking the
-binary, the equivalent command name is `mft-export`.
+Every example below uses `mft-config`. The old `mft-export` name still works as
+a deprecated alias and will be removed in a future release.
+
+**Run every command from the same directory.** `mft-config` writes its backups
+and its single-use plan journal to `.mft-state/` relative to the current working
+directory, so switching directories between `plan` and `apply` consults a
+different journal. Pick a directory and stay in it.
 
 ## Read the controller
 
 List connected Twisters:
 
 ```sh
-node dist/cli.js list
+mft-config list
 ```
 
 Export the only connected device:
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 ```
 
 If more than one Twister is connected, use the index shown by `list`:
 
 ```sh
-node dist/cli.js export --device 1 --out twister-config.json
+mft-config export --device 1 --out twister-config.json
 ```
 
 The JSON includes the firmware and unit identity, detected bank count, all
@@ -321,9 +320,9 @@ minutes and are bound to the snapshot hash, firmware version, and device ID.
 ### Make the top row green when active and purple when inactive
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 
-node dist/cli.js plan \
+mft-config plan \
   --snapshot twister-config.json \
   --set bank.1.encoder.1.colors.active=green \
   --set bank.1.encoder.1.colors.inactive=purple \
@@ -335,7 +334,7 @@ node dist/cli.js plan \
   --set bank.1.encoder.4.colors.inactive=purple \
   --out patch-plan.json
 
-node dist/cli.js apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes
 ```
 
 ### Make the first two push switches toggle on and off
@@ -343,15 +342,15 @@ node dist/cli.js apply --plan patch-plan.json --yes
 Code `1` is `ccToggle`:
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 
-node dist/cli.js plan \
+mft-config plan \
   --snapshot twister-config.json \
   --set bank.1.encoder.1.switch.action.code=1 \
   --set bank.1.encoder.2.switch.action.code=1 \
   --out patch-plan.json
 
-node dist/cli.js apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes
 ```
 
 ### Change a knob's rotary and push MIDI mappings
@@ -360,9 +359,9 @@ This makes bank 2, encoder 5 send CC 20 on channel 3 when turned, and a
 momentary CC 40 on channel 4 when pressed:
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 
-node dist/cli.js plan \
+mft-config plan \
   --snapshot twister-config.json \
   --set bank.2.encoder.5.encoder.type.code=1 \
   --set bank.2.encoder.5.encoder.midiChannel=3 \
@@ -372,15 +371,15 @@ node dist/cli.js plan \
   --set bank.2.encoder.5.switch.midiNumber=40 \
   --out patch-plan.json
 
-node dist/cli.js apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes
 ```
 
 ### Set a velocity-sensitive spread indicator with a red detent
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 
-node dist/cli.js plan \
+mft-config plan \
   --snapshot twister-config.json \
   --set bank.3.encoder.9.movement.code=2 \
   --set bank.3.encoder.9.indicator.code=3 \
@@ -388,15 +387,15 @@ node dist/cli.js plan \
   --set bank.3.encoder.9.detent.color=red \
   --out patch-plan.json
 
-node dist/cli.js apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes
 ```
 
 ### Change global brightness and sleep behavior
 
 ```sh
-node dist/cli.js export --out twister-config.json
+mft-config export --out twister-config.json
 
-node dist/cli.js plan \
+mft-config plan \
   --snapshot twister-config.json \
   --set global.brightness.rgb=96 \
   --set global.brightness.indicator=80 \
@@ -404,7 +403,7 @@ node dist/cli.js plan \
   --set global.sleep.animation.code=0 \
   --out patch-plan.json
 
-node dist/cli.js apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes
 ```
 
 Timeout index `4` means 10 minutes; sleep animation code `0` turns the lights
@@ -446,6 +445,24 @@ encoder-tag probe and then reads all 64 or 128 encoder records sequentially.
 - Individual side-button actions are read-only in the current planner.
 - Restore is not exposed as a command yet. Backups are retained under
   `.mft-state/backups/` for a future confirmed restore workflow.
+
+## Develop
+
+Working on the tool itself, rather than using it:
+
+```sh
+git clone https://github.com/oveddan/mft-api.git
+cd mft-api
+pnpm install
+pnpm run check
+```
+
+`pnpm run build` compiles to `dist/`, and `node dist/cli.js` is then equivalent
+to the installed `mft-config` command. `pnpm pack` produces the publishable
+tarball and runs the full check first.
+
+On Linux you need the ALSA development package required by RtMidi if you are
+building the native dependency from source rather than using its prebuilds.
 
 ## License
 
