@@ -203,6 +203,21 @@ test("0b: frames whose bytes differ from their hex are refused", async () => {
   assert.equal(connection.writes.length, 0);
 });
 
+test("0b: a value outside its field's range is refused at apply time", async () => {
+  const connection = new FakeTwister();
+  const before = await exportConfiguration(connection, device, { timeoutMs: 100, retries: 0 });
+  const plan = createPatchPlan(before, [{ path: "global.midiChannel", value: 5 }]);
+
+  // The rule is 1..16, and planning enforces it. Applying is the trust
+  // boundary though, and 100 is still 7-bit, so the codec would encode it
+  // happily and read-back would agree with the forged expectation.
+  const outOfRange = [{ ...plan.changes[0]!, desired: 100, rawDesired: 100 }];
+  const forged = resign({ ...plan, changes: outOfRange, frames: globalFramesFor(before, outOfRange) });
+
+  await assert.rejects(applyTo(connection, device, forged), /outside 1\.\.16/);
+  assert.equal(connection.writes.length, 0);
+});
+
 test("0f: an unreadable expiry is rejected rather than treated as unexpired", async () => {
   const connection = new FakeTwister();
   const before = await exportConfiguration(connection, device, { timeoutMs: 100, retries: 0 });

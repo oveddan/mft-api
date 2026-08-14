@@ -155,6 +155,27 @@ function parseTarget(config: ConfigExport, path: string): {
   };
 }
 
+/**
+ * Re-checks an already-resolved value against its field rule.
+ *
+ * `resolveValue` enforces this while planning, but planning is not a trust
+ * boundary — applying is. Without this, a re-signed plan could set a 1..16
+ * field to 100: the value is still 7-bit so the codec accepts it, and
+ * `expectedSnapshotAfterChanges` expects the same number, so read-back
+ * verification agrees too.
+ */
+function assertWithinRule(value: number | boolean, rule: FieldRule, path: string): void {
+  if (rule.kind === "boolean") {
+    if (typeof value !== "boolean") throw new Error(`${path} expects a boolean, received ${String(value)}`);
+    return;
+  }
+  const minimum = rule.min ?? 0;
+  const maximum = rule.max ?? 127;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < minimum || value > maximum) {
+    throw new Error(`${path} value ${String(value)} is outside ${minimum}..${maximum}`);
+  }
+}
+
 function recordForTarget(
   config: ConfigExport,
   target: string,
@@ -191,6 +212,7 @@ export function deriveFrames(config: ConfigExport, changes: PlannedChange[], pol
     // writing a different tag entirely: `global.brightness.rgb` in the change
     // list, tag 3 in the bytes. They are now cross-checked, not obeyed.
     const resolved = parseTarget(config, change.path);
+    assertWithinRule(change.desired, resolved.rule, change.path);
     const rawDesired = desiredRaw(change.desired, resolved.rule, policy.shiftedChannelIsOneBased);
     if (
       resolved.target !== change.target ||
@@ -241,7 +263,6 @@ export function createPatchPlan(config: ConfigExport, inputs: PatchInput[], now 
   if (inputs.length === 0) throw new Error("At least one --set operation is required");
   const policy = firmwarePolicy(config.device.firmware.date);
   const palette = config.globals.colorMap.name === "mf64" ? "mf64" : "classic";
-  const changedRecords = new Map<string, { rawTags: Record<string, number>; bank?: number; encoder?: number }>();
   const changes: PlannedChange[] = [];
 
   for (const input of inputs) {
@@ -255,12 +276,6 @@ export function createPatchPlan(config: ConfigExport, inputs: PatchInput[], now 
     const desired = resolveValue(input.value, target.rule, palette);
     if (desired === expected) throw new Error(`${target.normalizedPath} is already ${String(desired)}`);
     const rawDesired = desiredRaw(desired, target.rule, policy.shiftedChannelIsOneBased);
-    let changed = changedRecords.get(target.target);
-    if (!changed) {
-      changed = { rawTags: { ...target.rawTags }, bank: target.bank, encoder: target.encoder };
-      changedRecords.set(target.target, changed);
-    }
-    changed.rawTags[String(target.rule.tag)] = rawDesired;
     changes.push({ path: target.normalizedPath, target: target.target, tag: target.rule.tag, expected, desired, rawExpected, rawDesired });
   }
 
