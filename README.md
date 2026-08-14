@@ -82,7 +82,7 @@ mft-config plan \
   --set bank.1.encoder.1.colors.inactive=purple \
   --out patch-plan.json
 
-mft-config apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes   # disabled: see #14
 ```
 
 ## What this is not
@@ -127,6 +127,17 @@ MIDI channel, and MIDI number are independently configurable.
 Only `apply` can write configuration. System commands, reset commands, and
 bootloader commands are always blocked. Live writes currently require firmware
 `2026-07-02` and a strong command-`0x05` device identity.
+
+> **`apply` is disabled in the current release.** Two defects in the write path
+> ([#14](https://github.com/oveddan/mft-api/issues/14)) are open: a plan file
+> edited to set `applyEligibility.eligible=true` keeps a valid plan ID, which
+> bypasses the firmware allowlist; and `.mft-state` — the backups and the
+> single-use plan journal — resolves against the current working directory, so
+> applying from a different directory consults a different journal. That second
+> one became easy to hit once the CLI could be installed and run from anywhere.
+>
+> `list`, `export`, and `plan` are unaffected and are the whole read path. To
+> write settings meanwhile, use the vendor MIDI Fighter Utility.
 
 ## Install
 
@@ -317,6 +328,10 @@ Changes use a deliberate three-step workflow: export a fresh snapshot, create
 and inspect an offline plan, then explicitly apply it. Plans expire after 15
 minutes and are bound to the snapshot hash, firmware version, and device ID.
 
+**The third step is disabled in this release** — see the note under [What this
+tool does](#what-this-tool-does). The recipes below still work through `plan`,
+which is offline and never opens a MIDI port; only the final `apply` refuses.
+
 ### Make the top row green when active and purple when inactive
 
 ```sh
@@ -334,7 +349,7 @@ mft-config plan \
   --set bank.1.encoder.4.colors.inactive=purple \
   --out patch-plan.json
 
-mft-config apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes   # disabled: see #14
 ```
 
 ### Make the first two push switches toggle on and off
@@ -350,7 +365,7 @@ mft-config plan \
   --set bank.1.encoder.2.switch.action.code=1 \
   --out patch-plan.json
 
-mft-config apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes   # disabled: see #14
 ```
 
 ### Change a knob's rotary and push MIDI mappings
@@ -371,7 +386,7 @@ mft-config plan \
   --set bank.2.encoder.5.switch.midiNumber=40 \
   --out patch-plan.json
 
-mft-config apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes   # disabled: see #14
 ```
 
 ### Set a velocity-sensitive spread indicator with a red detent
@@ -387,7 +402,7 @@ mft-config plan \
   --set bank.3.encoder.9.detent.color=red \
   --out patch-plan.json
 
-mft-config apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes   # disabled: see #14
 ```
 
 ### Change global brightness and sleep behavior
@@ -403,7 +418,7 @@ mft-config plan \
   --set global.sleep.animation.code=0 \
   --out patch-plan.json
 
-mft-config apply --plan patch-plan.json --yes
+mft-config apply --plan patch-plan.json --yes   # disabled: see #14
 ```
 
 Timeout index `4` means 10 minutes; sleep animation code `0` turns the lights
@@ -460,6 +475,11 @@ pnpm run check
 `pnpm run build` compiles to `dist/`, and `node dist/cli.js` is then equivalent
 to the installed `mft-config` command. `pnpm pack` produces the publishable
 tarball and runs the full check first.
+
+`MFT_UNSAFE_APPLY=1` lifts the `apply` block so the write path can be exercised
+against real hardware while [#14](https://github.com/oveddan/mft-api/issues/14)
+is open. It is for developing this tool, not for getting work done — the defects
+it steps around are real, and it is deliberately absent from the agent skill.
 
 On Linux you need the ALSA development package required by RtMidi if you are
 building the native dependency from source rather than using its prebuilds.

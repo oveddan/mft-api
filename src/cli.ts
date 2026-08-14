@@ -25,12 +25,14 @@ function usage(): string {
   mft-config list [--timeout <milliseconds>]
   mft-config export [--device <index>] [--out <file>] [--timeout <milliseconds>]
   mft-config plan --snapshot <config.json> --set <path=value> [--set <path=value>] [--out <file>]
-  mft-config apply --plan <patch-plan.json> --yes [--device <index>]
+  mft-config apply --plan <patch-plan.json> --yes [--device <index>]   (disabled)
 
 This tool only sends Universal Identity, global pull (0x02), encoder bulk-pull
 (0x04/0x01), and device-ID pull (0x05) messages. The plan command is offline.
-Only apply can write settings, and it requires an eligible content-addressed plan
-plus explicit --yes confirmation.`;
+
+apply is the only command that writes settings, and it is disabled in this
+release while the write-path defects in issue #14 are open. list, export, and
+plan are unaffected.`;
 }
 
 function parseArguments(argv: string[]): Arguments {
@@ -81,6 +83,35 @@ function parseArguments(argv: string[]): Arguments {
   return result;
 }
 
+// Live writes are withheld from the published package until the apply-boundary
+// defects in issue #14 are fixed. Reading and planning are unaffected.
+//
+// Publishing to npm is what makes this worth gating rather than merely
+// tracking: before, operating the device meant working inside a checkout, and
+// now `npx mft-config apply` from any directory is the ordinary path. That
+// removes the friction that was containing a forgeable eligibility flag and a
+// journal whose location depends on the current directory.
+//
+// The escape hatch exists so this project can still exercise its own write path
+// against real hardware. It is deliberately not documented in the agent skill.
+function assertApplyEnabled(): void {
+  if (process.env.MFT_UNSAFE_APPLY === "1") return;
+  throw new Error(
+    [
+      "apply is disabled in this release while the write-path defects in",
+      "https://github.com/oveddan/mft-api/issues/14 are open.",
+      "",
+      "Specifically: a plan file edited to set applyEligibility.eligible=true keeps a",
+      "valid planId, which bypasses the firmware allowlist; and .mft-state (backups and",
+      "the single-use plan journal) resolves against the current working directory, so",
+      "applying from a different directory consults a different journal.",
+      "",
+      "list, export, and plan are unaffected. To write settings meanwhile, use the",
+      "vendor MIDI Fighter Utility.",
+    ].join("\n"),
+  );
+}
+
 function parseSet(expression: string): PatchInput {
   const separator = expression.indexOf("=");
   if (separator <= 0) throw new Error(`Invalid --set expression ${expression}; expected path=value`);
@@ -106,6 +137,8 @@ async function main(): Promise<void> {
     process.stdout.write(`${usage()}\n`);
     return;
   }
+  // Before discovery, so a disabled apply never opens a MIDI port.
+  if (args.command === "apply") assertApplyEnabled();
 
   if (args.command === "plan") {
     const snapshot = JSON.parse(await readFile(resolve(args.snapshot!), "utf8")) as ConfigExport;

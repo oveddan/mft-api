@@ -73,14 +73,21 @@ mft-config plan \
 
 Plans expire after 15 minutes. If the plan expired or the device may have changed since export, re-export and re-plan. Never edit a plan file: its ID is a content hash.
 
-## Apply only with explicit confirmation
+## Apply is currently disabled
 
-Require an explicit user instruction to apply the reviewed plan to the physical controller. Do not apply a plan created for a merely hypothetical request. Before confirmation, disclose that the CLI has no restore command: its backup JSON is a record, not an automated recovery path. A failed or unknown apply may require the vendor Twister Utility or manual reconfiguration.
+`mft-config apply` refuses in the current release while the write-path defects in
+[issue #14](https://github.com/oveddan/mft-api/issues/14) are open — a plan file edited to set `applyEligibility.eligible=true` keeps a valid plan ID and bypasses the firmware allowlist, and `.mft-state` resolves against the current working directory.
+
+When a user asks to change settings: still export, still plan, still report the plan. Then tell them the change cannot be written yet, name the issue, and offer the vendor MIDI Fighter Utility as the way to make it by hand. Do not look for a way around the block — there is an environment variable that lifts it and it is deliberately not for agent use.
+
+The rest of this section describes the flow that returns once #14 lands. Keep following it for everything up to the write.
 
 ```sh
 mft-config list --timeout 1500
-mft-config apply --plan patch-plan.json --yes --device 0 --timeout 1500
+mft-config apply --plan patch-plan.json --yes --device 0 --timeout 1500   # refuses today
 ```
+
+Require an explicit user instruction to apply the reviewed plan to the physical controller. Do not apply a plan created for a merely hypothetical request. Before confirmation, disclose that the CLI has no restore command: its backup JSON is a record, not an automated recovery path. A failed or unknown apply may require the vendor Twister Utility or manual reconfiguration.
 
 Preserve these invariants:
 
