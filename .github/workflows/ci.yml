@@ -7,14 +7,20 @@ on:
 
 jobs:
   check:
-    name: Build and test
+    name: Build and test (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor from `engines`, and current. A test-runner glob behaved
+        # differently across these two, so the floor is not optional coverage.
+        node: [20, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check

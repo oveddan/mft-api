@@ -28,8 +28,8 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "tsx --test \"test/*.test.ts\"",
-    "check": "tsc -p tsconfig.json && tsc -p tsconfig.test.json && tsx --test \"test/*.test.ts\"",
+    "test": "node test/run-tests.mjs",
+    "check": "tsc -p tsconfig.json && tsc -p tsconfig.test.json && node test/run-tests.mjs",
     "prepack": "npm run check"
   },
   "engines": {
