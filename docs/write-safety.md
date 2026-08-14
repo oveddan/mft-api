@@ -31,3 +31,22 @@ The write implementation must preserve these invariants:
 Before support broadens beyond the current allowlist, tests must additionally
 cover journal recovery, two attached devices, timeouts before and after send,
 normalized fields, and confirmed restore.
+
+## One writer at a time
+
+**Nothing prevents two processes from writing to the same controller at once,
+and this is deliberate.** A Twister is a single controller on one person's desk;
+concurrent writers are an edge case, and defending against them would mean a
+cross-process lock and its own failure modes — a stale lock is a device you
+cannot write to.
+
+If it does happen, the damage is bounded but real. Each write re-reads the
+device and rejects stale expected values, so the second writer is normally
+refused rather than silently clobbering. What is *not* defended: an encoder
+write is a multi-frame bulk transfer, and frames from two writers interleaved
+mid-record can leave that record in a state neither writer intended. Read-back
+verification will notice, but only after the fact.
+
+So: don't run two applies against the same controller simultaneously, and don't
+build tooling that does. The same applies to the vendor MIDI Fighter Utility —
+close it before writing from here.

@@ -439,8 +439,18 @@ Before sending any configuration frame, `apply`:
 7. records pending, verified, failed, or unknown outcomes in an append-only
    journal.
 
-Completed plans are single-use. See [`docs/write-safety.md`](docs/write-safety.md)
-for protocol-level details and remaining limitations.
+Completed plans are single-use.
+
+**Write to a controller from one process at a time.** Nothing enforces this —
+a lock would bring its own failure modes for what is an edge case on a
+single-user desk device. Each write re-reads the device and rejects stale
+values, so a second writer is normally refused rather than silently clobbering;
+but encoder writes are multi-frame bulk transfers, and interleaved frames can
+leave a record in a state neither writer intended. Close the vendor MIDI Fighter
+Utility before writing from here, too.
+
+See [`docs/write-safety.md`](docs/write-safety.md) for protocol-level details
+and remaining limitations.
 
 ## Protocol coverage
 
