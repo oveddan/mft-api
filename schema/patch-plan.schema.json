@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://djtechtools.com/schemas/mft-patch-plan-v1.json",
+  "$id": "https://djtechtools.com/schemas/mft-patch-plan-v2.json",
   "title": "MIDI Fighter Twister patch plan",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "planId", "createdAt", "expiresAt", "snapshotHash", "deviceBinding", "applyEligibility", "changes", "frames"],
   "properties": {
-    "schemaVersion": { "const": "djtt.mft.patch-plan.v1" },
+    "schemaVersion": { "const": "djtt.mft.patch-plan.v2" },
     "planId": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
     "createdAt": { "type": "string", "format": "date-time" },
     "expiresAt": { "type": "string", "format": "date-time" },

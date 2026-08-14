@@ -76,7 +76,7 @@ Plans expire after 15 minutes. If the plan expired or the device may have change
 ## Apply is currently disabled
 
 `mft-config apply` refuses in the current release while the write-path defects in
-[issue #14](https://github.com/oveddan/mft-api/issues/14) are open — a plan file edited to set `applyEligibility.eligible=true` keeps a valid plan ID and bypasses the firmware allowlist, and `.mft-state` resolves against the current working directory.
+[issue #14](https://github.com/oveddan/mft-api/issues/14) are open — `.mft-state` resolves against the current working directory, so an apply run from a different directory consults a different journal, and a plan whose apply died mid-write can be replayed.
 
 When a user asks to change settings: still export, still plan, still report the plan. Then tell them the change cannot be written yet, name the issue, and offer the vendor MIDI Fighter Utility as the way to make it by hand. Do not look for a way around the block — there is an environment variable that lifts it and it is deliberately not for agent use.
 

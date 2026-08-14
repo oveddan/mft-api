@@ -31,3 +31,37 @@ The write implementation must preserve these invariants:
 Before support broadens beyond the current allowlist, tests must additionally
 cover journal recovery, two attached devices, timeouts before and after send,
 normalized fields, and confirmed restore.
+
+## One writer at a time
+
+**Nothing prevents two processes from writing to the same controller at once,
+and this is deliberate.** A Twister is a single controller on one person's desk;
+concurrent writers are an edge case, and defending against them would mean a
+cross-process lock and its own failure modes — a stale lock is a device you
+cannot write to.
+
+If it does happen, the failure is quiet, and the precondition check does not
+save you. Every write carries the **whole** record — all of a global block, all
+fifteen tags of an encoder — rebuilt from the snapshot that writer read. So two
+applies that never interleave a single frame still lose data:
+
+1. A and B both export. Both hold snapshot `S`, and both preconditions pass,
+   because neither has written yet.
+2. A writes its record and reads back. Its own change is there. A reports
+   success.
+3. B writes its record, rebuilt from `S` — which still carries A's tags at
+   their *old* values. A's change is silently reverted.
+4. B reads back and compares against what `S` plus B's own change implies.
+   It matches. B reports success too.
+
+Both processes report success, verification passes for both, and one of the two
+changes is gone with nothing recorded to say so. Interleaving frames mid-record
+is a further way to corrupt a single record, but it is not the main risk — this
+is, and it needs no unlucky timing, only two overlapping reads.
+
+Read-back cannot catch it: each writer verifies against its own expectation, and
+both expectations are individually satisfied.
+
+So: don't run two applies against the same controller simultaneously, and don't
+build tooling that does. The same applies to the vendor MIDI Fighter Utility —
+close it before writing from here.

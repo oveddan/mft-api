@@ -128,13 +128,14 @@ Only `apply` can write configuration. System commands, reset commands, and
 bootloader commands are always blocked. Live writes currently require firmware
 `2026-07-02` and a strong command-`0x05` device identity.
 
-> **`apply` is disabled in the current release.** Two defects in the write path
-> ([#14](https://github.com/oveddan/mft-api/issues/14)) are open: a plan file
-> edited to set `applyEligibility.eligible=true` keeps a valid plan ID, which
-> bypasses the firmware allowlist; and `.mft-state` — the backups and the
-> single-use plan journal — resolves against the current working directory, so
-> applying from a different directory consults a different journal. That second
-> one became easy to hit once the CLI could be installed and run from anywhere.
+> **`apply` is disabled in the current release** while the write-path defects in
+> [#14](https://github.com/oveddan/mft-api/issues/14) are open. Still
+> outstanding: `.mft-state` — the backups and the single-use plan journal —
+> resolves against the current working directory, so applying from a different
+> directory consults a different journal; and a plan whose apply died mid-write
+> can be replayed, because only a *completed* plan is recorded as consumed.
+> The first became easy to hit once the CLI could be installed and run from
+> anywhere.
 >
 > `list`, `export`, and `plan` are unaffected and are the whole read path. To
 > write settings meanwhile, use the vendor MIDI Fighter Utility.
@@ -438,8 +439,21 @@ Before sending any configuration frame, `apply`:
 7. records pending, verified, failed, or unknown outcomes in an append-only
    journal.
 
-Completed plans are single-use. See [`docs/write-safety.md`](docs/write-safety.md)
-for protocol-level details and remaining limitations.
+Completed plans are single-use.
+
+**Write to a controller from one process at a time.** Nothing enforces this — a
+lock would bring its own failure modes for what is an edge case on a single-user
+desk device.
+
+Do not rely on the stale-value check to catch an overlap. Every write carries
+the whole record, rebuilt from the snapshot that writer read, so if two applies
+both export before either writes, the second one reverts the first's changes —
+and because each verifies against its own expectation, both report success and
+nothing records that a change was lost. Close the vendor MIDI Fighter Utility
+before writing from here, too.
+
+See [`docs/write-safety.md`](docs/write-safety.md) for protocol-level details
+and remaining limitations.
 
 ## Protocol coverage
 

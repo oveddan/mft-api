@@ -2,9 +2,9 @@ import type { DeviceDescriptor, ConfigExport } from "./model.js";
 import type { ConfigurationWriteConnection } from "./midi.js";
 import { exportConfiguration } from "./exporter.js";
 import { appendJournal } from "./journal.js";
-import { assertValidPlan, expectedSnapshotAfterChanges, type PatchPlan } from "./planner.js";
+import { assertValidPlan, deriveFrames, evaluateApplyEligibility, expectedSnapshotAfterChanges, type PatchPlan } from "./planner.js";
 import { snapshotHash } from "./snapshot.js";
-import { encodeGlobalDryRun } from "./write-codec.js";
+import { encodeGlobalDryRun, type DryRunFrame } from "./write-codec.js";
 import { firmwarePolicy } from "./compatibility.js";
 
 interface ApplyOptions {
@@ -21,6 +21,41 @@ export interface ApplyResult {
 
 function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+/**
+ * Returns the frames to send, derived from the live snapshot and the plan's
+ * declared changes, having confirmed they are the frames the plan carries.
+ *
+ * The comparison is over `bytes`, because `bytes` is what gets sent. Comparing
+ * the `hex` rendering instead left a hole: a plan could keep the legitimate hex
+ * string for display while carrying different bytes, pass the check, and have
+ * the modified bytes written — read-back would notice only after they reached
+ * the device.
+ *
+ * The derived frames are also what the caller sends, so the plan's own array is
+ * never the source of any byte. It exists to be reviewed, and to be checked.
+ */
+function resolveFramesToSend(snapshot: ConfigExport, plan: PatchPlan): DryRunFrame[] {
+  const derived = deriveFrames(snapshot, plan.changes, firmwarePolicy(snapshot.device.firmware.date));
+  const matches =
+    derived.length === plan.frames.length &&
+    derived.every((frame, index) => {
+      const declared = plan.frames[index];
+      return (
+        declared !== undefined &&
+        frame.target === declared.target &&
+        frame.hex === declared.hex &&
+        frame.bytes.length === declared.bytes.length &&
+        frame.bytes.every((byte, position) => byte === declared.bytes[position])
+      );
+    });
+  if (!matches) {
+    throw new Error(
+      "Patch plan frames do not match the frames its changes imply for this device; refusing to send bytes the plan does not describe",
+    );
+  }
+  return derived;
 }
 
 function assertDeviceBinding(snapshot: ConfigExport, plan: PatchPlan): void {
@@ -47,10 +82,27 @@ export async function applyPatchPlan(
   const before = await exportConfiguration(connection, device, { timeoutMs, retries: 1 });
   assertDeviceBinding(before, plan);
   if (snapshotHash(before) !== plan.snapshotHash) throw new Error("Device configuration changed since this plan was created");
+
+  // Everything above trusts the plan file. These two checks do not, and both
+  // have to run here rather than in assertValidPlan, because both need the
+  // device state that only exists after the export above.
+  //
+  // The plan's own applyEligibility is attacker-editable and the content hash
+  // is unkeyed, so re-deriving it from the device in front of us is what
+  // actually enforces the firmware allowlist.
+  const liveEligibility = evaluateApplyEligibility(before);
+  if (!liveEligibility.eligible) {
+    throw new Error(`Device is not eligible for live writes: ${liveEligibility.reasons.join("; ")}`);
+  }
+  // And the frames are only meaningful if they are the frames these changes
+  // imply. Encoder writes carry the whole record, so a plan could declare one
+  // change and ship bytes that rewrite fourteen other tags. Everything below
+  // sends these derived frames, never plan.frames.
+  const framesToSend = resolveFramesToSend(before, plan);
   const backupPath = await options.saveBackup(before);
   await appendJournal(options.journalPath, { planId: plan.planId, outcome: "started", detail: `backup=${backupPath}` });
 
-  const targets = [...new Set(plan.frames.map((frame) => frame.target))];
+  const targets = [...new Set(framesToSend.map((frame) => frame.target))];
   const policy = firmwarePolicy(device.identity.firmwareDate);
   // Encoder writes need a trailing global-settings write to re-enable the display
   // (see below). Validate that frame's tag layout before the first write lands, so
@@ -60,7 +112,7 @@ export async function applyPatchPlan(
   if (needsDisplayRefresh) encodeGlobalDryRun(before.globals.rawTags, policy);
   let progressive = before;
   for (const target of targets) {
-    const frames = plan.frames.filter((frame) => frame.target === target);
+    const frames = framesToSend.filter((frame) => frame.target === target);
     const targetChanges = plan.changes.filter((change) => change.target === target);
     const expected = expectedSnapshotAfterChanges(progressive, targetChanges);
     try {
