@@ -185,13 +185,31 @@ function recordForTarget(
 export function deriveFrames(config: ConfigExport, changes: PlannedChange[], policy: FirmwarePolicy): DryRunFrame[] {
   const changedRecords = new Map<string, { rawTags: Record<string, number>; bank?: number; encoder?: number }>();
   for (const change of changes) {
-    let changed = changedRecords.get(change.target);
-    if (!changed) {
-      const record = recordForTarget(config, change.target);
-      changed = { rawTags: { ...record.rawTags }, bank: record.bank, encoder: record.encoder };
-      changedRecords.set(change.target, changed);
+    // Derive from `path` and `desired` — the two fields a human actually reads
+    // — rather than from `target`, `tag`, and `rawDesired`. Those three are
+    // redundant, and trusting them let a plan display an innocuous path while
+    // writing a different tag entirely: `global.brightness.rgb` in the change
+    // list, tag 3 in the bytes. They are now cross-checked, not obeyed.
+    const resolved = parseTarget(config, change.path);
+    const rawDesired = desiredRaw(change.desired, resolved.rule, policy.shiftedChannelIsOneBased);
+    if (
+      resolved.target !== change.target ||
+      resolved.rule.tag !== change.tag ||
+      resolved.normalizedPath !== change.path ||
+      rawDesired !== change.rawDesired
+    ) {
+      throw new Error(
+        `Change ${change.path} does not agree with the target it declares (target ${change.target}, tag ${change.tag})`,
+      );
     }
-    changed.rawTags[String(change.tag)] = change.rawDesired;
+
+    let changed = changedRecords.get(resolved.target);
+    if (!changed) {
+      const record = recordForTarget(config, resolved.target);
+      changed = { rawTags: { ...record.rawTags }, bank: record.bank, encoder: record.encoder };
+      changedRecords.set(resolved.target, changed);
+    }
+    changed.rawTags[String(resolved.rule.tag)] = rawDesired;
   }
 
   const frames: DryRunFrame[] = [];

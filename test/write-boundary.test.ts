@@ -8,7 +8,10 @@ import { applyPatchPlan } from "../src/applier.js";
 import { exportConfiguration } from "../src/exporter.js";
 import type { ConfigurationWriteConnection, MessageHandler } from "../src/midi.js";
 import type { DeviceDescriptor } from "../src/model.js";
-import { assertValidPlan, createPatchPlan, type PatchPlan } from "../src/planner.js";
+import { assertValidPlan, createPatchPlan, type PatchPlan, type PlannedChange } from "../src/planner.js";
+import { encodeGlobalDryRun } from "../src/write-codec.js";
+import { firmwarePolicy } from "../src/compatibility.js";
+import type { ConfigExport } from "../src/model.js";
 import { assertConfigurationWrite, assertReadOnlyRequest } from "../src/protocol.js";
 import { sha256 } from "../src/snapshot.js";
 
@@ -102,6 +105,16 @@ function resign(plan: PatchPlan): PatchPlan {
   return { ...plan, planId: `sha256:${sha256(body)}` };
 }
 
+// Builds the global frame a forged change list implies, bypassing deriveFrames
+// so the test can present a *self-consistent* plan. Otherwise the guard could
+// reject it on a frame mismatch and the test would never exercise the change
+// check it is actually about.
+function globalFramesFor(snapshot: ConfigExport, changes: PlannedChange[]) {
+  const rawTags = { ...snapshot.globals.rawTags };
+  for (const change of changes) rawTags[String(change.tag)] = change.rawDesired;
+  return encodeGlobalDryRun(rawTags, firmwarePolicy(snapshot.device.firmware.date));
+}
+
 async function applyTo(connection: ConfigurationWriteConnection, target: DeviceDescriptor, plan: PatchPlan): Promise<void> {
   const directory = await mkdtemp(join(tmpdir(), "mft-boundary-"));
   await applyPatchPlan(connection, target, plan, {
@@ -155,6 +168,37 @@ test("0b: frames that do not match the declared changes are refused", async () =
   const forged = resign({ ...plan, frames: smuggled.frames });
 
   assert.doesNotThrow(() => assertValidPlan(forged));
+  await assert.rejects(applyTo(connection, device, forged), /frames do not match/);
+  assert.equal(connection.writes.length, 0);
+});
+
+test("0b: a change cannot write a different tag than its path names", async () => {
+  const connection = new FakeTwister();
+  const before = await exportConfiguration(connection, device, { timeoutMs: 100, retries: 0 });
+  const plan = createPatchPlan(before, [{ path: "global.brightness.rgb", value: 100 }]);
+
+  // Keep the path a reviewer reads, retarget the tag the bytes touch. Tags 2-7
+  // are real globals that no supported path can reach, so this writes a setting
+  // the plan does not admit to touching. The frames still match the changes —
+  // it is the changes themselves that lie.
+  const retargeted = [{ ...plan.changes[0]!, tag: 3, rawExpected: before.globals.rawTags["3"]!, rawDesired: 77 }];
+  const forged = resign({ ...plan, changes: retargeted, frames: globalFramesFor(before, retargeted) });
+
+  await assert.rejects(applyTo(connection, device, forged), /does not agree with the target it declares/);
+  assert.equal(connection.writes.length, 0);
+});
+
+test("0b: frames whose bytes differ from their hex are refused", async () => {
+  const connection = new FakeTwister();
+  const before = await exportConfiguration(connection, device, { timeoutMs: 100, retries: 0 });
+  const plan = createPatchPlan(before, [{ path: "bank.1.encoder.1.colors.active", value: "green" }]);
+
+  // `hex` is only a rendering. Leave it legitimate so the plan reads correctly,
+  // and modify the bytes that actually get sent.
+  const tampered = plan.frames.map((frame) => ({ ...frame, bytes: [...frame.bytes] }));
+  tampered[0]!.bytes[11] = 0x7f;
+  const forged = resign({ ...plan, frames: tampered });
+
   await assert.rejects(applyTo(connection, device, forged), /frames do not match/);
   assert.equal(connection.writes.length, 0);
 });
