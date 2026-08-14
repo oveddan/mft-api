@@ -5,12 +5,12 @@ import { dirname, resolve } from "node:path";
 
 import { exportConfiguration } from "./exporter.js";
 import type { ConfigExport } from "./model.js";
-import { createPatchPlan, type PatchInput, type PatchPlan } from "./planner.js";
+import { createPatchPlan, planUpdate, type PatchInput, type PatchPlan } from "./planner.js";
 import { applyPatchPlan } from "./applier.js";
 import { assertPlanNotConsumed } from "./journal.js";
 
 interface Arguments {
-  command: "list" | "export" | "plan" | "apply" | "help";
+  command: "list" | "export" | "plan" | "apply" | "update" | "help";
   device?: number;
   out?: string;
   timeoutMs: number;
@@ -18,6 +18,7 @@ interface Arguments {
   sets: string[];
   plan?: string;
   yes: boolean;
+  backup?: string;
 }
 
 function usage(): string {
@@ -25,14 +26,19 @@ function usage(): string {
   mft-config list [--timeout <milliseconds>]
   mft-config export [--device <index>] [--out <file>] [--timeout <milliseconds>]
   mft-config plan --snapshot <config.json> --set <path=value> [--set <path=value>] [--out <file>]
+  mft-config update --set <path=value> [--set <path=value>] [--yes] [--backup <file>]
   mft-config apply --plan <patch-plan.json> --yes [--device <index>]   (disabled)
 
 This tool only sends Universal Identity, global pull (0x02), encoder bulk-pull
 (0x04/0x01), and device-ID pull (0x05) messages. The plan command is offline.
 
-apply is the only command that writes settings, and it is disabled in this
-release while the write-path defects in issue #14 are open. list, export, and
-plan are unaffected.`;
+update reads the controller, works out what actually differs, and writes only
+that. Without --yes it prints the difference and writes nothing.
+
+apply is a separate flow for a reviewed plan file, and is disabled in this
+release while the write-path defects in issue #14 are open. update is not
+affected: it keeps no journal and no hidden state, and writes a backup file you
+name.`;
 }
 
 function parseArguments(argv: string[]): Arguments {
@@ -40,7 +46,9 @@ function parseArguments(argv: string[]): Arguments {
   if (command === "help" || command === "--help" || command === "-h") {
     return { command: "help", timeoutMs: 500, sets: [], yes: false };
   }
-  if (command !== "list" && command !== "export" && command !== "plan" && command !== "apply") throw new Error(`Unknown command: ${command}`);
+  if (command !== "list" && command !== "export" && command !== "plan" && command !== "apply" && command !== "update") {
+    throw new Error(`Unknown command: ${command}`);
+  }
 
   const result: Arguments = { command, timeoutMs: 500, sets: [], yes: false };
   for (let index = 1; index < argv.length; index += 1) {
@@ -61,6 +69,9 @@ function parseArguments(argv: string[]): Arguments {
     } else if (option === "--set" && value !== undefined) {
       result.sets.push(value);
       index += 1;
+    } else if (option === "--backup" && value !== undefined) {
+      result.backup = value;
+      index += 1;
     } else if (option === "--plan" && value !== undefined) {
       result.plan = value;
       index += 1;
@@ -76,6 +87,7 @@ function parseArguments(argv: string[]): Arguments {
   if (result.device !== undefined && (!Number.isInteger(result.device) || result.device < 0)) {
     throw new Error("--device must be a non-negative integer");
   }
+  if (command === "update" && result.sets.length === 0) throw new Error("update requires at least one --set <path=value>");
   if (command === "plan" && !result.snapshot) throw new Error("plan requires --snapshot <config.json>");
   if (command === "plan" && result.sets.length === 0) throw new Error("plan requires at least one --set <path=value>");
   // Before the --plan and --yes checks: a disabled command must not coach the
@@ -176,6 +188,54 @@ async function main(): Promise<void> {
   const selectedIndex = args.device ?? 0;
   const device = devices[selectedIndex];
   if (!device) throw new Error(`Device index ${selectedIndex} does not exist; use the list command first`);
+
+  if (args.command === "update") {
+    // Read, work out the difference, write only that. No plan file changes
+    // hands, so there is nothing to forge and nothing to replay — which is why
+    // this needs neither the journal nor the single-use machinery that `apply`
+    // carries, and is not gated behind them.
+    const readConnection = backend.connect(device);
+    let config: ConfigExport;
+    try {
+      config = await exportConfiguration(readConnection, device, { timeoutMs: args.timeoutMs });
+    } finally {
+      readConnection.close();
+    }
+
+    const { plan, skipped } = planUpdate(config, args.sets.map(parseSet));
+    for (const skip of skipped) process.stdout.write(`unchanged  ${skip.path} is already ${String(skip.value)}\n`);
+    if (!plan) {
+      process.stdout.write("Nothing to do; every requested value is already set.\n");
+      return;
+    }
+    for (const change of plan.changes) {
+      process.stdout.write(`change     ${change.path}: ${String(change.expected)} -> ${String(change.desired)}\n`);
+    }
+    if (!plan.applyEligibility.eligible) {
+      throw new Error(`This controller cannot accept live writes: ${plan.applyEligibility.reasons.join("; ")}`);
+    }
+    if (!args.yes) {
+      process.stdout.write(`\n${plan.changes.length} change(s) not written. Re-run with --yes to apply.\n`);
+      return;
+    }
+
+    const backupPath = resolve(args.backup ?? `mft-backup-${new Date().toISOString().replaceAll(":", "-")}.json`);
+    const connection = backend.connectForApply(device);
+    try {
+      const result = await applyPatchPlan(connection, device, plan, {
+        journalPath: resolve(dirname(backupPath), "mft-updates.ndjson"),
+        timeoutMs: args.timeoutMs,
+        saveBackup: async (snapshot) => {
+          await writeAtomically(backupPath, `${JSON.stringify(snapshot, null, 2)}\n`);
+          return backupPath;
+        },
+      });
+      process.stdout.write(`\nApplied and verified ${plan.changes.length} change(s).\nBackup: ${result.backupPath}\n`);
+    } finally {
+      connection.close();
+    }
+    return;
+  }
 
   if (args.command === "apply") {
     const plan = JSON.parse(await readFile(resolve(args.plan!), "utf8")) as PatchPlan;
