@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: Build and test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor from `engines`, and current. A test-runner glob behaved
+        # differently across these two, so the floor is not optional coverage.
+        node: [20, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+
+  package:
+    name: Packed artifact (${{ matrix.os }})
+    needs: check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - name: Pack
+        run: pnpm pack --pack-destination "${{ runner.temp }}"
+
+      # Install the tarball the way a user would, outside the source tree, so a
+      # missing `files` entry or an unbuilt dist/ fails here rather than on npm.
+      - name: Install the tarball into a clean directory
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir -p smoke && cd smoke
+          npm init -y > /dev/null
+          npm install "${{ runner.temp }}"/mft-config-*.tgz
+
+      - name: Both bins resolve
+        shell: bash
+        working-directory: ${{ runner.temp }}/smoke
+        run: |
+          ./node_modules/.bin/mft-config --help
+          ./node_modules/.bin/mft-export --help
+
+      # `--help` returns before the dynamic import of ./midi.js, so it never
+      # loads the native addon and would not catch a broken or missing prebuild.
+      #
+      # verifyLibraryLoaded() forces the prebuilt .node to be resolved and
+      # dlopen'd, which is the thing worth testing. Constructing an Input would
+      # additionally require a working MIDI backend, and hosted Linux runners
+      # have no ALSA sequencer (`/dev/snd/seq` is absent), so that fails for a
+      # reason unrelated to whether the package shipped correctly.
+      - name: Native MIDI addon loads
+        shell: bash
+        working-directory: ${{ runner.temp }}/smoke
+        run: |
+          node -e "
+            import('@julusian/midi').then((m) => {
+              const midi = m.default ?? m;
+              midi.verifyLibraryLoaded();
+              if (typeof midi.Input !== 'function') throw new Error('Input export missing');
+              console.log('native midi addon loaded and verified');
+            }).catch((error) => { console.error(error); process.exit(1); });
+          "
+
+      # Exercises real planner logic through the packed CLI. Offline: `plan`
+      # never opens a MIDI port, so this needs no attached hardware.
+      - name: Offline plan against the synthetic fixture
+        shell: bash
+        working-directory: ${{ runner.temp }}/smoke
+        run: |
+          ./node_modules/.bin/mft-config plan \
+            --snapshot "$GITHUB_WORKSPACE/test/fixtures/synthetic-four-bank.json" \
+            --set bank.1.encoder.1.colors.active=blue \
+            --set bank.2.encoder.5.encoder.midiChannel=3 \
+            --out plan.json
+          node -e "
+            const plan = require('node:fs').readFileSync('plan.json', 'utf8');
+            const parsed = JSON.parse(plan);
+            if (parsed.changes.length !== 2) throw new Error('expected 2 changes');
+            if (!parsed.planId.startsWith('sha256:')) throw new Error('missing plan hash');
+            console.log('offline plan ok:', parsed.planId);
+          "
+
+      # No step in this workflow may talk to a real controller: `list`,
+      # `export`, and `apply` all require attached hardware and are excluded.
