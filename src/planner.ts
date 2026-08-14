@@ -258,6 +258,54 @@ export function evaluateApplyEligibility(config: ConfigExport): { eligible: bool
   return { eligible: reasons.length === 0, reasons };
 }
 
+export interface UpdatePlan {
+  /** Null when every requested value is already set. */
+  plan: PatchPlan | null;
+  skipped: Array<{ path: string; value: number | boolean }>;
+}
+
+/**
+ * Plans an update: the same content-addressed plan, minus the values already
+ * at their target.
+ *
+ * `createPatchPlan` throws on a no-op, which is right for `plan`, where the
+ * contract is "the state I described is the state I found". It is wrong for an
+ * update, where "make the top row green" must not fail because one of those
+ * knobs is already green. Here a no-op is skipped and reported.
+ *
+ * Duplicate paths are rejected rather than resolved. Two `--set`s for one field
+ * have no obvious winner, and silently picking one is worse than refusing.
+ */
+export function planUpdate(config: ConfigExport, inputs: PatchInput[], now = new Date()): UpdatePlan {
+  if (config.schemaVersion !== "djtt.mft.config-export.v1") throw new Error("Unsupported snapshot schema");
+  if (inputs.length === 0) throw new Error("At least one --set operation is required");
+  const policy = firmwarePolicy(config.device.firmware.date);
+  const palette = config.globals.colorMap.name === "mf64" ? "mf64" : "classic";
+
+  const seen = new Set<string>();
+  const pending: PatchInput[] = [];
+  const skipped: UpdatePlan["skipped"] = [];
+
+  for (const input of inputs) {
+    const target = parseTarget(config, input.path);
+    if (seen.has(target.normalizedPath)) throw new Error(`Duplicate --set for ${target.normalizedPath}`);
+    seen.add(target.normalizedPath);
+
+    const rawExpected = target.rawTags[String(target.rule.tag)];
+    if (rawExpected === undefined) throw new Error(`${target.normalizedPath} was not reported by this firmware`);
+    const expected = semanticRaw(rawExpected, target.rule, policy.shiftedChannelIsOneBased);
+    const desired = resolveValue(input.value, target.rule, palette);
+    if (desired === expected) {
+      skipped.push({ path: target.normalizedPath, value: desired });
+      continue;
+    }
+    pending.push(input);
+  }
+
+  if (pending.length === 0) return { plan: null, skipped };
+  return { plan: createPatchPlan(config, pending, now), skipped };
+}
+
 export function createPatchPlan(config: ConfigExport, inputs: PatchInput[], now = new Date()): PatchPlan {
   if (config.schemaVersion !== "djtt.mft.config-export.v1") throw new Error("Unsupported snapshot schema");
   if (inputs.length === 0) throw new Error("At least one --set operation is required");

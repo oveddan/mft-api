@@ -41,7 +41,17 @@ test("help still documents apply as disabled", () => {
   const result = runCli(["--help"]);
 
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /apply is the only command that writes settings, and it is disabled/);
+  assert.match(result.stdout, /apply is a separate flow for a reviewed plan file, and is disabled/);
+  assert.match(result.stdout, /mft-config update --set/);
+});
+
+test("update rejects an empty change list and is not caught by the apply gate", () => {
+  // No device is touched: argument validation rejects before discovery.
+  const result = runCli(["update"]);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /update requires at least one --set/);
+  assert.doesNotMatch(result.stderr, /apply is disabled/);
 });
 
 test("plan still works while apply is gated", () => {
