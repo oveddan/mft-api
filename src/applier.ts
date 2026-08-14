@@ -2,7 +2,7 @@ import type { DeviceDescriptor, ConfigExport } from "./model.js";
 import type { ConfigurationWriteConnection } from "./midi.js";
 import { exportConfiguration } from "./exporter.js";
 import { appendJournal } from "./journal.js";
-import { assertValidPlan, expectedSnapshotAfterChanges, type PatchPlan } from "./planner.js";
+import { assertValidPlan, deriveFrames, evaluateApplyEligibility, expectedSnapshotAfterChanges, type PatchPlan } from "./planner.js";
 import { snapshotHash } from "./snapshot.js";
 import { encodeGlobalDryRun } from "./write-codec.js";
 import { firmwarePolicy } from "./compatibility.js";
@@ -21,6 +21,18 @@ export interface ApplyResult {
 
 function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function assertFramesMatchChanges(snapshot: ConfigExport, plan: PatchPlan): void {
+  const derived = deriveFrames(snapshot, plan.changes, firmwarePolicy(snapshot.device.firmware.date));
+  const mismatch =
+    derived.length !== plan.frames.length ||
+    derived.some((frame, index) => frame.hex !== plan.frames[index]?.hex || frame.target !== plan.frames[index]?.target);
+  if (mismatch) {
+    throw new Error(
+      "Patch plan frames do not match the frames its changes imply for this device; refusing to send bytes the plan does not describe",
+    );
+  }
 }
 
 function assertDeviceBinding(snapshot: ConfigExport, plan: PatchPlan): void {
@@ -47,6 +59,22 @@ export async function applyPatchPlan(
   const before = await exportConfiguration(connection, device, { timeoutMs, retries: 1 });
   assertDeviceBinding(before, plan);
   if (snapshotHash(before) !== plan.snapshotHash) throw new Error("Device configuration changed since this plan was created");
+
+  // Everything above trusts the plan file. These two checks do not, and both
+  // have to run here rather than in assertValidPlan, because both need the
+  // device state that only exists after the export above.
+  //
+  // The plan's own applyEligibility is attacker-editable and the content hash
+  // is unkeyed, so re-deriving it from the device in front of us is what
+  // actually enforces the firmware allowlist.
+  const liveEligibility = evaluateApplyEligibility(before);
+  if (!liveEligibility.eligible) {
+    throw new Error(`Device is not eligible for live writes: ${liveEligibility.reasons.join("; ")}`);
+  }
+  // And the frames are only meaningful if they are the frames these changes
+  // imply. Encoder writes carry the whole record, so a plan could declare one
+  // change and ship bytes that rewrite fourteen other tags.
+  assertFramesMatchChanges(before, plan);
   const backupPath = await options.saveBackup(before);
   await appendJournal(options.journalPath, { planId: plan.planId, outcome: "started", detail: `backup=${backupPath}` });
 

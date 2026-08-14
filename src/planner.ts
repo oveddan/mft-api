@@ -1,4 +1,4 @@
-import { firmwarePolicy } from "./compatibility.js";
+import { firmwarePolicy, type FirmwarePolicy } from "./compatibility.js";
 import type { ConfigExport } from "./model.js";
 import { sha256, snapshotHash } from "./snapshot.js";
 import { encodeEncoderDryRun, encodeGlobalDryRun, type DryRunFrame } from "./write-codec.js";
@@ -19,8 +19,10 @@ export interface PlannedChange {
   rawDesired: number;
 }
 
+export const PATCH_PLAN_SCHEMA = "djtt.mft.patch-plan.v2";
+
 export interface PatchPlan {
-  schemaVersion: "djtt.mft.patch-plan.v1";
+  schemaVersion: typeof PATCH_PLAN_SCHEMA;
   planId: string;
   createdAt: string;
   expiresAt: string;
@@ -153,6 +155,69 @@ function parseTarget(config: ConfigExport, path: string): {
   };
 }
 
+function recordForTarget(
+  config: ConfigExport,
+  target: string,
+): { rawTags: Record<string, number>; bank?: number; encoder?: number } {
+  if (target === "globals") return { rawTags: config.globals.rawTags };
+  const match = target.match(/^bank\.(\d+)\.encoder\.(\d+)$/);
+  if (!match) throw new Error(`Invalid plan target ${target}`);
+  const bank = Number(match[1]);
+  const encoder = Number(match[2]);
+  const record = config.banks
+    .find((candidate) => candidate.number === bank)
+    ?.encoders.find((candidate) => candidate.number === encoder);
+  if (!record) throw new Error(`Plan target ${target} is absent from snapshot`);
+  return { rawTags: record.rawTags, bank, encoder };
+}
+
+/**
+ * Builds the exact write frames a set of changes implies, given the snapshot
+ * they apply to.
+ *
+ * Encoder writes are whole-record bulk transfers, so a frame is only derivable
+ * together with the fourteen tags the change does not touch. Those live in the
+ * snapshot, never in the change list — which is why a plan's frames cannot be
+ * checked against its own changes in isolation, and why the applier calls this
+ * with the freshly-read device state rather than with anything the plan
+ * carries.
+ */
+export function deriveFrames(config: ConfigExport, changes: PlannedChange[], policy: FirmwarePolicy): DryRunFrame[] {
+  const changedRecords = new Map<string, { rawTags: Record<string, number>; bank?: number; encoder?: number }>();
+  for (const change of changes) {
+    let changed = changedRecords.get(change.target);
+    if (!changed) {
+      const record = recordForTarget(config, change.target);
+      changed = { rawTags: { ...record.rawTags }, bank: record.bank, encoder: record.encoder };
+      changedRecords.set(change.target, changed);
+    }
+    changed.rawTags[String(change.tag)] = change.rawDesired;
+  }
+
+  const frames: DryRunFrame[] = [];
+  for (const [target, changed] of changedRecords) {
+    if (target === "globals") frames.push(...encodeGlobalDryRun(changed.rawTags, policy));
+    else frames.push(...encodeEncoderDryRun(changed.bank!, changed.encoder!, config.capabilities.bankCount, policy, changed.rawTags));
+  }
+  return frames;
+}
+
+/**
+ * Whether live writes are permitted for the device this snapshot describes.
+ *
+ * Deliberately a pure function of a snapshot rather than a stored field. The
+ * plan carries its answer for reporting, but the applier must recompute it from
+ * the device in front of it: the plan's copy is attacker-editable, and the
+ * content hash is unkeyed so re-signing an edited plan is trivial.
+ */
+export function evaluateApplyEligibility(config: ConfigExport): { eligible: boolean; reasons: string[] } {
+  const policy = firmwarePolicy(config.device.firmware.date);
+  const reasons: string[] = [];
+  if (!policy.liveWriteAllowed) reasons.push(`Live writes are not allowlisted for firmware ${policy.firmwareDate}`);
+  if (!config.device.unitId?.hex) reasons.push("Snapshot has no strong per-device identity");
+  return { eligible: reasons.length === 0, reasons };
+}
+
 export function createPatchPlan(config: ConfigExport, inputs: PatchInput[], now = new Date()): PatchPlan {
   if (config.schemaVersion !== "djtt.mft.config-export.v1") throw new Error("Unsupported snapshot schema");
   if (inputs.length === 0) throw new Error("At least one --set operation is required");
@@ -181,11 +246,7 @@ export function createPatchPlan(config: ConfigExport, inputs: PatchInput[], now 
     changes.push({ path: target.normalizedPath, target: target.target, tag: target.rule.tag, expected, desired, rawExpected, rawDesired });
   }
 
-  const frames: DryRunFrame[] = [];
-  for (const [target, changed] of changedRecords) {
-    if (target === "globals") frames.push(...encodeGlobalDryRun(changed.rawTags, policy));
-    else frames.push(...encodeEncoderDryRun(changed.bank!, changed.encoder!, config.capabilities.bankCount, policy, changed.rawTags));
-  }
+  const frames = deriveFrames(config, changes, policy);
 
   const createdAt = now.toISOString();
   const expiresAt = new Date(now.getTime() + 15 * 60_000).toISOString();
@@ -197,15 +258,17 @@ export function createPatchPlan(config: ConfigExport, inputs: PatchInput[], now 
     modelId: config.device.modelId,
     identityStrength: (config.device.unitId ? "strong" : "weak") as "strong" | "weak",
   };
-  const reasons: string[] = [];
-  if (!policy.liveWriteAllowed) reasons.push(`Live writes are not allowlisted for firmware ${policy.firmwareDate}`);
-  if (!deviceBinding.unitId) reasons.push("Snapshot has no strong per-device identity");
-  const body = { createdAt, expiresAt, snapshotHash: stateHash, deviceBinding, changes, frames };
+  const applyEligibility = evaluateApplyEligibility(config);
+  // applyEligibility is inside the hashed body: outside it, flipping
+  // `eligible` to true left planId valid and bypassed the firmware allowlist.
+  // Hashing it is not the real defence — the hash is unkeyed, so an editor can
+  // recompute it — but leaving a load-bearing field unhashed is indefensible.
+  // The defence is the applier recomputing eligibility from the live device.
+  const body = { createdAt, expiresAt, snapshotHash: stateHash, deviceBinding, applyEligibility, changes, frames };
   return {
-    schemaVersion: "djtt.mft.patch-plan.v1",
+    schemaVersion: PATCH_PLAN_SCHEMA,
     planId: `sha256:${sha256(body)}`,
     ...body,
-    applyEligibility: { eligible: reasons.length === 0, reasons },
   };
 }
 
@@ -215,15 +278,20 @@ function planBody(plan: PatchPlan): unknown {
     expiresAt: plan.expiresAt,
     snapshotHash: plan.snapshotHash,
     deviceBinding: plan.deviceBinding,
+    applyEligibility: plan.applyEligibility,
     changes: plan.changes,
     frames: plan.frames,
   };
 }
 
 export function assertValidPlan(plan: PatchPlan, now = new Date()): void {
-  if (plan.schemaVersion !== "djtt.mft.patch-plan.v1") throw new Error("Unsupported patch plan schema");
+  if (plan.schemaVersion !== PATCH_PLAN_SCHEMA) throw new Error("Unsupported patch plan schema");
   if (plan.planId !== `sha256:${sha256(planBody(plan))}`) throw new Error("Patch plan content hash is invalid");
-  if (new Date(plan.expiresAt).getTime() <= now.getTime()) throw new Error(`Patch plan expired at ${plan.expiresAt}`);
+  const expiresAt = new Date(plan.expiresAt).getTime();
+  // An unparseable date yields NaN, and `NaN <= now` is false — so without this
+  // an unparseable expiry read as "not expired" and the plan never aged out.
+  if (!Number.isFinite(expiresAt)) throw new Error(`Patch plan has an unreadable expiry ${plan.expiresAt}`);
+  if (expiresAt <= now.getTime()) throw new Error(`Patch plan expired at ${plan.expiresAt}`);
   if (!plan.applyEligibility.eligible) throw new Error(`Patch plan is not eligible: ${plan.applyEligibility.reasons.join("; ")}`);
 }
 
