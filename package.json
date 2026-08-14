@@ -26,6 +26,9 @@
     "dist",
     "schema"
   ],
+  "exports": {
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "node test/run-tests.mjs",

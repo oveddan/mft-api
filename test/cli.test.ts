@@ -44,12 +44,15 @@ test("help still documents apply as disabled", () => {
   assert.match(result.stdout, /apply is the only command that writes settings, and it is disabled/);
 });
 
-test("read-only and offline commands are not gated", () => {
-  // `plan` never opens a MIDI port, so this stays hermetic. Its own argument
-  // validation is what rejects here, proving the gate did not intercept.
-  const result = runCli(["plan"]);
+test("plan still works while apply is gated", () => {
+  // Run a real plan to completion. Asserting on a `plan` invocation that fails
+  // during argument parsing would pass no matter what the gate did.
+  // `plan` never opens a MIDI port, so this stays hermetic.
+  const snapshot = fileURLToPath(new URL("fixtures/synthetic-four-bank.json", import.meta.url));
+  const result = runCli(["plan", "--snapshot", snapshot, "--set", "bank.1.encoder.1.colors.active=blue"]);
 
-  assert.equal(result.status, 1);
-  assert.match(result.stderr, /plan requires --snapshot/);
-  assert.doesNotMatch(result.stderr, /apply is disabled/);
+  assert.equal(result.status, 0);
+  const plan = JSON.parse(result.stdout) as { planId: string; changes: unknown[] };
+  assert.match(plan.planId, /^sha256:/);
+  assert.equal(plan.changes.length, 1);
 });

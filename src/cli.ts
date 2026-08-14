@@ -78,6 +78,9 @@ function parseArguments(argv: string[]): Arguments {
   }
   if (command === "plan" && !result.snapshot) throw new Error("plan requires --snapshot <config.json>");
   if (command === "plan" && result.sets.length === 0) throw new Error("plan requires at least one --set <path=value>");
+  // Before the --plan and --yes checks: a disabled command must not coach the
+  // user into completing an invocation that is going to be refused anyway.
+  if (command === "apply") assertApplyEnabled();
   if (command === "apply" && !result.plan) throw new Error("apply requires --plan <patch-plan.json>");
   if (command === "apply" && !result.yes) throw new Error("apply requires explicit confirmation with --yes");
   return result;
@@ -137,9 +140,6 @@ async function main(): Promise<void> {
     process.stdout.write(`${usage()}\n`);
     return;
   }
-  // Before discovery, so a disabled apply never opens a MIDI port.
-  if (args.command === "apply") assertApplyEnabled();
-
   if (args.command === "plan") {
     const snapshot = JSON.parse(await readFile(resolve(args.snapshot!), "utf8")) as ConfigExport;
     const plan = createPatchPlan(snapshot, args.sets.map(parseSet));

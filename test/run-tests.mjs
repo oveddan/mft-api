@@ -14,16 +14,24 @@ import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// Absolute throughout, so the runner works regardless of the caller's cwd.
 const testDirectory = fileURLToPath(new URL(".", import.meta.url));
 const files = readdirSync(testDirectory)
   .filter((name) => name.endsWith(".test.ts"))
   .sort()
-  .map((name) => join("test", name));
+  .map((name) => join(testDirectory, name));
 
 if (files.length === 0) {
   process.stderr.write("No test files matching *.test.ts were found in test/\n");
   process.exit(1);
 }
 
-const result = spawnSync(process.execPath, ["--import", "tsx", "--test", ...files], { stdio: "inherit" });
+// Anchor the child to the package root: `--import tsx` is resolved against the
+// child's cwd, so inheriting a foreign one makes tsx itself unresolvable even
+// though the test paths above are absolute.
+const packageRoot = fileURLToPath(new URL("..", import.meta.url));
+const result = spawnSync(process.execPath, ["--import", "tsx", "--test", ...files], {
+  stdio: "inherit",
+  cwd: packageRoot,
+});
 process.exit(result.status ?? 1);
