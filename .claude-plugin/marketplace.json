@@ -1,0 +1,16 @@
+{
+  "name": "mft-api",
+  "owner": {
+    "name": "Dan Oved",
+    "url": "https://github.com/oveddan"
+  },
+  "description": "MIDI Fighter Twister configuration tooling for coding agents.",
+  "plugins": [
+    {
+      "name": "mft-configurator",
+      "source": "./",
+      "description": "Inspect and configure a DJ TechTools MIDI Fighter Twister in plain language, through the guarded mft-config CLI.",
+      "category": "hardware"
+    }
+  ]
+}
