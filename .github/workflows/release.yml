@@ -34,9 +34,13 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
-      # setup-node pins an npm that predates OIDC publishing on some images.
+      # The Node 20 image ships npm 10, which predates OIDC publishing; trusted
+      # publishing needs >= 11.5.1. Pinned to the 11 line on purpose: `npm@latest`
+      # is npm 12, which refuses to run on Node 20 and fails this step outright.
       - name: Use an npm that supports trusted publishing
-        run: npm install -g npm@latest
+        run: |
+          npm install -g npm@^11.5.1
+          npm --version
 
       - run: pnpm install --frozen-lockfile
 
