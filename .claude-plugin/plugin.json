@@ -1,0 +1,23 @@
+{
+  "name": "mft-configurator",
+  "displayName": "MIDI Fighter Twister Configurator",
+  "description": "Inspect and configure a DJ TechTools MIDI Fighter Twister in plain language, through the guarded mft-config CLI.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Dan Oved",
+    "url": "https://github.com/oveddan"
+  },
+  "homepage": "https://github.com/oveddan/mft-api#readme",
+  "repository": "https://github.com/oveddan/mft-api",
+  "license": "MIT",
+  "keywords": [
+    "midi-fighter-twister",
+    "midi",
+    "djtechtools",
+    "hardware",
+    "sysex"
+  ],
+  "skills": [
+    "./.claude/skills"
+  ]
+}

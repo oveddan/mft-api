@@ -1,0 +1,72 @@
+name: Release
+
+# Publishing is deliberately manual: Actions -> Release -> Run workflow.
+# Nothing reaches npm without someone choosing to send it.
+#
+# The version comes from package.json. Bump it, merge, then run this. The job
+# refuses a version that is already on npm, so a forgotten bump fails loudly
+# here rather than as an opaque registry rejection after a full build.
+#
+# Authentication is npm trusted publishing (OIDC), so there is no NPM_TOKEN to
+# rotate or leak. It has to be enabled once on npmjs.com:
+# Settings -> Trusted publisher -> GitHub Actions -> this repo, workflow
+# `release.yml`. Until that is done the publish step fails, and the fallback is
+# `npm publish` from a logged-in machine.
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      # Pushing the release tag.
+      contents: write
+      # Required for trusted publishing; without it npm falls back to looking
+      # for a token and fails.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      # setup-node pins an npm that predates OIDC publishing on some images.
+      - name: Use an npm that supports trusted publishing
+        run: npm install -g npm@latest
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Read the version to publish
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      # A forgotten version bump is the likeliest mistake here. `npm view` on an
+      # unpublished version exits 0 with empty output, so test the output rather
+      # than the exit status.
+      - name: Version is not already published
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ -n "$(npm view "mft-config@$VERSION" version 2>/dev/null)" ]; then
+            echo "mft-config@$VERSION is already on npm; bump the version in package.json first" >&2
+            exit 1
+          fi
+          echo "publishing mft-config@$VERSION"
+
+      # `prepack` runs the full `check` (build + typecheck + tests), so this
+      # cannot publish something that does not build or pass tests.
+      - name: Publish
+        run: npm publish --provenance --access public
+
+      # Only after a successful publish, so a tag never points at a release that
+      # did not happen.
+      - name: Tag the released commit
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git tag "v$VERSION"
+          git push origin "v$VERSION"

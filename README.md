@@ -143,7 +143,32 @@ bootloader commands are always blocked. Live writes currently require firmware
 ## Install
 
 Requires Node.js 20 or newer. Prebuilt MIDI binaries ship for macOS, Windows,
-and Linux, so no compiler is needed on common platforms.
+and Linux, so no compiler is needed on common platforms. Nothing below needs a
+clone, a build, or a local toolchain.
+
+### Claude Code
+
+Two commands, and the agent can talk to the controller:
+
+```sh
+/plugin marketplace add oveddan/mft-api
+/plugin install mft-configurator@mft-api
+```
+
+That installs the `mft-configurator` skill. It reaches the CLI through
+`npx -y mft-config`, so there is no second install step — though a global
+install (below) makes every command noticeably faster to start.
+
+### Codex
+
+Codex has no marketplace, so the skill is fetched directly. This copies only
+the skill directory:
+
+```sh
+mkdir -p ~/.codex/skills/mft-configurator && curl -fsSL https://github.com/oveddan/mft-api/archive/refs/heads/main.tar.gz | tar -xz --strip-components=4 -C ~/.codex/skills/mft-configurator mft-api-main/.claude/skills/mft-configurator
+```
+
+### The CLI on its own
 
 ```sh
 npm install -g mft-config
@@ -157,6 +182,9 @@ npx -y mft-config list
 
 Every example below uses `mft-config`. The old `mft-export` name still works as
 a deprecated alias and will be removed in a future release.
+
+Upgrading, removing, and the details of both agent installs are in
+[docs/agent-skill.md](docs/agent-skill.md).
 
 **Run every command from the same directory.** `mft-config` writes its backups
 and its single-use plan journal to `.mft-state/` relative to the current working
@@ -497,6 +525,19 @@ it steps around are real, and it is deliberately absent from the agent skill.
 
 On Linux you need the ALSA development package required by RtMidi if you are
 building the native dependency from source rather than using its prebuilds.
+
+### Releasing
+
+Publishing is manual. Bump the version in `package.json`, merge it, then run
+the **Release** workflow from the Actions tab. Nothing reaches npm without
+someone choosing to send it.
+
+The workflow refuses a version that is already published, so a forgotten bump
+fails immediately instead of part-way through. `prepack` runs the full check
+before anything uploads, and the released commit is tagged `v<version>` only
+after the publish succeeds. Authentication is npm trusted publishing, so there
+is no token stored in the repository — it has to be enabled once on npmjs.com,
+as [.github/workflows/release.yml](.github/workflows/release.yml) describes.
 
 ## License
 
