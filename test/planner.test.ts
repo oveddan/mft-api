@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { encoderTransferTag, firmwarePolicy } from "../src/compatibility.js";
 import type { ConfigExport, EncoderExport } from "../src/model.js";
-import { createPatchPlan } from "../src/planner.js";
+import { createPatchPlan, planUpdate } from "../src/planner.js";
 import { assembleBulkParts, parseBulkPart, parseTagValues } from "../src/protocol.js";
 import { snapshotHash } from "../src/snapshot.js";
 
@@ -111,4 +112,48 @@ test("compatibility fixtures select the expected last encoder tag", async () => 
     assert.equal(encoderTransferTag(fixture.bankCount, 16, fixture.bankCount, policy), fixture.lastTag);
     assert.equal(policy.liveWriteAllowed, fixture.writeAllowed);
   }
+});
+
+test("planUpdate skips values already set instead of aborting the whole update", () => {
+  const config = JSON.parse(readFileSync(new URL("fixtures/synthetic-four-bank.json", import.meta.url), "utf8")) as ConfigExport;
+  // Encoder 1 is already green in the fixture; encoder 2 is not being changed
+  // to its current value. `createPatchPlan` refuses the pair outright.
+  assert.throws(
+    () => createPatchPlan(config, [
+      { path: "bank.1.encoder.1.colors.active", value: "green" },
+      { path: "bank.1.encoder.2.colors.active", value: "blue" },
+    ]),
+    /is already/,
+  );
+
+  const { plan, skipped } = planUpdate(config, [
+    { path: "bank.1.encoder.1.colors.active", value: "green" },
+    { path: "bank.1.encoder.2.colors.active", value: "blue" },
+  ]);
+
+  assert.equal(skipped.length, 1);
+  assert.equal(skipped[0]?.path, "bank.1.encoder.1.colors.active");
+  assert.equal(plan?.changes.length, 1);
+  assert.equal(plan?.changes[0]?.path, "bank.1.encoder.2.colors.active");
+});
+
+test("planUpdate reports nothing to do when every value is already set", () => {
+  const config = JSON.parse(readFileSync(new URL("fixtures/synthetic-four-bank.json", import.meta.url), "utf8")) as ConfigExport;
+
+  const { plan, skipped } = planUpdate(config, [{ path: "bank.1.encoder.1.colors.active", value: "green" }]);
+
+  assert.equal(plan, null, "an all-skipped update must succeed having done nothing");
+  assert.equal(skipped.length, 1);
+});
+
+test("planUpdate refuses two --set operations for the same field", () => {
+  const config = JSON.parse(readFileSync(new URL("fixtures/synthetic-four-bank.json", import.meta.url), "utf8")) as ConfigExport;
+
+  assert.throws(
+    () => planUpdate(config, [
+      { path: "bank.1.encoder.1.colors.active", value: "blue" },
+      { path: "bank.1.encoder.1.colors.active", value: "red" },
+    ]),
+    /Duplicate --set/,
+  );
 });
