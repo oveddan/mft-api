@@ -223,6 +223,21 @@ MIDI channel, and MIDI number are independently configurable.
 
 ## What this tool does
 
+Agents use it as an MCP server (a connection an agent host such as Claude Code
+or Codex runs for you), `mft-config mcp`, which offers three tools:
+
+- `list_devices` discovers connected Twisters without changing them.
+- `export_configuration` reads the complete configuration and returns it with a
+  `snapshotId`.
+- `plan_changes` turns a `snapshotId` and a list of `{ path, value }` changes
+  into a reviewable plan. It is offline and never opens a MIDI port.
+
+The server also serves the `mft-configurator` skill — the instructions that
+teach an agent how to use those tools safely — so there is nothing else to
+install. It has no write tool.
+
+The same operations are available to people as a CLI:
+
 - `list` discovers connected Twisters without changing them.
 - `export` reads device identity, global settings, and all 64 or 128 banked
   encoder records into JSON.
@@ -230,6 +245,7 @@ MIDI channel, and MIDI number are independently configurable.
   It does not open MIDI ports.
 - `apply` writes an eligible plan, saves a backup first, and reads the entire
   controller back after every changed target to verify the result.
+- `mcp` starts the MCP server above.
 
 Only `apply` can write configuration. System commands, reset commands, and
 bootloader commands are always blocked. Live writes currently require firmware
@@ -253,29 +269,52 @@ Requires Node.js 20 or newer. Prebuilt MIDI binaries ship for macOS, Windows,
 and Linux, so no compiler is needed on common platforms. Nothing below needs a
 clone, a build, or a local toolchain.
 
+The recommended setup is to add the MCP server to your agent. That is the whole
+install: the server brings the skill with it, and `npx` fetches the latest
+published version each time the server starts.
+
 ### Claude Code
 
-Two commands, and the agent can talk to the controller:
-
 ```sh
-/plugin marketplace add oveddan/mft-api
-/plugin install mft-configurator@mft-api
+claude mcp add -s user mft-config -- npx -y mft-config mcp
 ```
 
-That installs the `mft-configurator` skill. It reaches the CLI through
-`npx -y mft-config`, so there is no second install step — though a global
-install (below) makes every command noticeably faster to start.
+`-s user` makes the server available in every project. Without it, Claude Code
+registers it only for the directory you ran the command in.
+
+Start a new session, and `/mcp` should list `mft-config` as connected. Then plug
+in the Twister and ask:
+
+> What's on my Twister right now?
 
 ### Codex
 
-Codex has no marketplace, so the skill is fetched directly. This copies only
-the skill directory:
-
 ```sh
-mkdir -p ~/.codex/skills/mft-configurator && curl -fsSL https://github.com/oveddan/mft-api/archive/refs/heads/main.tar.gz | tar -xz --strip-components=4 -C ~/.codex/skills/mft-configurator mft-api-main/.claude/skills/mft-configurator
+codex mcp add mft-config -- npx -y mft-config mcp
 ```
 
-### The CLI on its own
+### Anything else that speaks MCP
+
+Configure a stdio server with the command `npx -y mft-config mcp`. A host that
+does not implement the MCP Skills Extension can still read the skill: the
+server's instructions point to `skill://mft-configurator/SKILL.md`, an ordinary
+resource.
+
+Tools, the served skill, and why the server holds no MIDI port between calls
+are in [docs/agent-skill.md](docs/agent-skill.md).
+
+### Upgrading from the plugin
+
+Earlier releases installed a Claude Code plugin, `mft-configurator@mft-api`,
+whose skill drove the CLI. The plugin is gone. Remove it and add the server
+instead, so you are not left with two copies of the skill:
+
+```sh
+/plugin uninstall mft-configurator@mft-api
+/plugin marketplace remove mft-api
+```
+
+### Without an agent: the CLI
 
 ```sh
 npm install -g mft-config
@@ -287,20 +326,18 @@ Or run it without installing anything:
 npx -y mft-config list
 ```
 
-Every example below uses `mft-config`. The old `mft-export` name still works as
-a deprecated alias and will be removed in a future release.
+The CLI examples below use `mft-config`. The old `mft-export` name still works
+as a deprecated alias and will be removed in a future release.
 
-Upgrading, removing, and the details of both agent installs are in
-[docs/agent-skill.md](docs/agent-skill.md).
-
-**Run every command from the same directory.** `mft-config` writes its backups
-and its single-use plan journal to `.mft-state/` relative to the current working
-directory, so switching directories between `plan` and `apply` consults a
-different journal. Pick a directory and stay in it.
+**Run every CLI command from the same directory.** `mft-config` writes its
+backups and its single-use plan journal to `.mft-state/` relative to the current
+working directory, so switching directories between `plan` and `apply` consults
+a different journal. Pick a directory and stay in it.
 
 ## Read the controller
 
-List connected Twisters:
+With the MCP server, just ask the agent; it calls `list_devices` and
+`export_configuration`. From the CLI, list connected Twisters:
 
 ```sh
 mft-config list
@@ -464,6 +501,10 @@ Changes use a deliberate three-step workflow: export a fresh snapshot, create
 and inspect an offline plan, then explicitly apply it. Plans expire after 15
 minutes and are bound to the snapshot hash, firmware version, and device ID.
 
+Through the MCP server the agent performs the first two steps with
+`export_configuration` and `plan_changes`, passing each `--set path=value` below
+as a `{ "path", "value" }` change. The recipes show the CLI form.
+
 **The third step is disabled in this release** — see the note under [What this
 tool does](#what-this-tool-does). The recipes below still work through `plan`,
 which is offline and never opens a MIDI port; only the final `apply` refuses.
@@ -625,7 +666,15 @@ pnpm run check
 ```
 
 `pnpm run build` compiles to `dist/`, and `node dist/cli.js` is then equivalent
-to the installed `mft-config` command. `pnpm pack` produces the publishable
+to the installed `mft-config` command. To point your agent at the checkout
+instead of the published package, replace the registered server with the built
+one by absolute path, and rebuild after each change:
+
+```sh
+claude mcp remove -s user mft-config
+claude mcp add -s user mft-config -- node /absolute/path/to/mft-api/dist/cli.js mcp
+```
+ `pnpm pack` produces the publishable
 tarball and runs the full check first.
 
 `MFT_UNSAFE_APPLY=1` lifts the `apply` block so the write path can be exercised
