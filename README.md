@@ -1,101 +1,208 @@
 # MIDI Fighter Twister configuration API
 
-Read and write the persistent configuration of a DJ TechTools MIDI Fighter Twister —
-so an agent can set it up for you from a chat interface instead of you clicking through
-sixteen knobs by hand.
+Read and write the persistent configuration of a DJ TechTools [MIDI Fighter
+Twister](https://store.djtechtools.com/products/midi-fighter-twister) — so an agent can
+set it up from a chat interface instead of clicking through sixteen knobs by hand.
 
-<!-- IMAGE 1 (hero): photo of the Twister lit with a deliberate color layout —
-     e.g. top three rows one color, bottom row another. Shows the hardware and the
-     exact thing that is tedious to do by hand, in one frame.
-     Suggested path: docs/images/twister-hero.jpg -->
-
-![The MIDI Fighter Twister with a color layout applied](docs/images/twister-hero.jpg)
+[![A chat asks for new knob colors; the MIDI Fighter Twister's knobs change to match](https://media.danoved.xyz/mft-api/81fcec7/95b57ab0/twister-chat-demo.gif)](https://media.danoved.xyz/mft-api/81fcec7/f9be148f/twister-chat-demo.mp4)
 
 ## The problem
 
-It's a great controller because it's super programmable. You can change the MIDI CC
-values of every knob. You can change the colors. You can send values back to it to turn
-the knobs — so it's a bidirectional controller.
+The Twister is deeply programmable. There are four banks of controls, or eight with
+alternate firmware. Each knob has its own MIDI CC number and an on and an off color, and
+it can be a toggle or a tap. And there are more settings beyond that. It's also
+bidirectional — send values back to it and the knobs move. Another thing that's nice
+about the controller is that its firmware is
+[open source](https://github.com/DJ-TechTools/Midi_Fighter_Twister_Open_Source), so it
+was really easy to build this API on top of it.
 
-But if you want to program it and map it to Ableton or Chromatik or TouchDesigner, it
-takes a few steps.
+Programming all of this by hand takes a long time. It means going into the MIDI Fighter
+Utility, clicking a knob, setting its CC value, and setting its on and off color — one
+by one, for every knob.
 
-First, you have to go into the UI and click on every single knob, one by one, to see
-what its MIDI CC value is. If you want to change a color, you set that up one by one
-too. It's hard to set a bunch of knobs' colors at once — let's say you want the top
-three rows to be the same color. Same with the button settings: trigger, latch, all the
-different button settings, you have to go one by one.
+Then there's the mapping. A typical system, in Ableton or another DAW, maps a MIDI CC to
+several different knobs in the program. That means clicking, remembering what each knob
+was, and then clicking in Ableton or in Chromatik, for example. Each mapping in
+Chromatik is made manually: click the source knob from the template, the MIDI control,
+click the destination knob, and then set what the behavior is. Whether it's an on and
+off state or a toggle state has to be remembered, and then a color scheme has to be
+worked out and applied to each knob.
 
-The other thing is, let's say you have the program you're linking it with — Ableton,
-your music program, or TouchDesigner, or Chromatik. You then have to look in that
-program and manually reconcile what each MIDI CC value goes to. You have to manually map
-it, and you have to go back and forth between the two.
-
-<!-- IMAGE 2 (before/after): left — the stock Twister editor with a single knob
-     selected, showing what clicking through 16 knobs looks like. Right — the one
-     sentence that replaces it. Makes the tedium concrete for a reader who has never
-     opened the editor.
-     Suggested path: docs/images/before-after.png -->
-
-![The stock editor, one knob at a time, next to the sentence that replaces it](docs/images/before-after.png)
+All of it has to be remembered and written down, or it's easy to forget how something
+was done when coming back to it later.
 
 ## What this changes
 
-Now, with a single chat interface via agentic tools, you can just chat how you want it
-to be connected. You can say: I want this top knob to control intensity in
-TouchDesigner, or in these patterns. Or: I want this knob, when you press it, to trigger
-an instrument or a visual effect. And it'll do both the mapping and the color — you
-describe what color you want it to be — and it does all that in one shot.
+Now it's just a chat with an agent, and the agent keeps notes on how things were
+programmed. For example, with one color scheme for all the knobs, it sets the on and off
+colors for every knob at once, in one shot. A few sentences describe what a knob should
+do — "Can we make the bottom-right knob trigger a tap tempo when you press it?" — and
+it uses [Chromatik's MCP server](https://github.com/oveddan/chromatik-mcp) to bind that
+knob to that thing. It can bind it to multiple things in Chromatik, and because the
+agent keeps notes on the system for doing the MIDI mapping, it can answer questions
+later: "Can you explain the bank switch button? Pressing to the right makes it all
+dark." It can also suggest mappings that fit the audio program; once one is chosen, it
+creates it in one shot.
 
-<!-- IMAGE 3 (the demo): short GIF or video — type a sentence, physical knobs change
-     color or turn. The bidirectional behavior is the least obvious property of this
-     device and the only way to convey it is to show it.
-     Suggested path: docs/images/chat-to-knobs.gif -->
+Here's an example of using Claude to design a mapping and create
+[an artifact](https://claude.ai/artifact/GgvYNZ3f8Lke4jRWD5qQbF) to review and refer to
+when doing further programming. It's a nice visual output that can also be printed out
+as a guide, and it maintains itself.
 
-![Typing a sentence; the knobs change](docs/images/chat-to-knobs.gif)
+[![The Treetop Live Twister map: bank 1 of four, every encoder labeled with what it drives](https://media.danoved.xyz/mft-api/2d1eada/4e228abf/twister-map.png)](https://claude.ai/artifact/GgvYNZ3f8Lke4jRWD5qQbF)
 
-## Example: mapping a controller I didn't have
+## Examples
 
-This is how I actually used it in Chromatik. Someone had mapped a controller. I didn't
-have that controller on me, I had the MIDI Fighter Twister. I was able to say: look at
-how this controller is mapped, explain to me how it works. It was able to understand it.
-Then it was able to understand how the MIDI Fighter Twister works and suggest a few
-different possible sets of mappings for me, and I was able to choose one. Super easy.
-That would have taken me a very long time to do manually.
+Here are a few example prompts that show how this API can be used. They're adapted from
+real sessions with this tool. The main use case here was Chromatik, through the
+[Chromatik MCP server](https://github.com/oveddan/chromatik-mcp), but this could be
+generalized to other tools.
 
-<!-- IMAGE 4 (transcript): the actual chat exchange from that Chromatik session, as a
-     screenshot or a fenced block. This is the strongest single asset in the README —
-     it is a thing that happened rather than a claim about what is possible.
-     Suggested path: docs/images/chromatik-mapping-chat.png -->
+### Moving a mapping onto the Twister
 
-![The chat exchange that produced the mapping](docs/images/chromatik-mapping-chat.png)
+An Akai MPD218 was already mapped in another project, and this project had the Twister
+instead.
 
-Underneath, the agent is driving the CLI documented below. Nothing is hidden — the same
-work by hand looks like this:
+> Well, let's take a step back. Do you know how all the buttons and knobs were mapped?
+> Because it would be nice now to map a different controller in the same way.
+
+```text
+MPD218 (bank A only) — knobs A1-A4 are the "beat modulation intensity" knobs you
+remembered (kick/clap gain), A5-A6 do the same for melody. Pads: A9/A10 are
+dual-purpose (fire a kick/clap and recall a pattern/swatch), A11/A12 cycle
+pattern/palette, A13/A14 live-edit the kick/clap rhythm, A16 fires the Drop.
+…
+Straight MIDI mapping works fine for this and is simpler. The one thing the
+template class gets you that ad-hoc mapping doesn't: bidirectional feedback — it
+sends CC/note back to the device so its LED rings track the current parameter
+value. For a beat-intensity knob that's mostly hands-on anyway, that's a
+nice-to-have, not essential.
+…
+Done. The knob side is fully wired. Try turning the top-left 6 encoders on the
+Twister — they should move KickGain1/ClapGain1/KickGain2/ClapGain2/MelodyGain1/
+MelodyGain2 exactly like the MPD218's A1-A6 knobs did.
+```
+
+The simple one was enough. By hand that would have been an evening of cross-referencing
+CC numbers.
+
+### New colors for the new knobs
+
+This is the exchange in the video at the top.
+
+> Second-to-bottom row all blue, bottom row first two purple. It's too similar to the
+> rest of the controller, can you use new colors?
+
+```text
+Let's check what colors the existing knobs (1-8) already use, so the new ones
+stand out rather than blend in.
+
+The existing knobs (1-8) sit in the blue/cyan-ish range … — that's exactly why
+"blue" for the new ones blended in. Switching to yellow (movement) and red
+(color) for real contrast.
+
+Applied — knobs 9-12 should now be yellow, 13-14 red, both clearly distinct from
+the existing blue-family knobs. Take a look.
+```
+
+<details>
+<summary>Three more: tap tempo, a button that won't pulse, and a dark bank</summary>
+
+### Tap tempo on the bottom-right button
+
+> Can we make the bottom-right button of the controller tap tempo?
+
+```text
+Switch-16 is confirmed free in all three scopes. Wiring it to the tempo tap.
+
+Now verifying encoder 16's switch is still momentary on the hardware — a toggle
+would only fire on alternate presses, which would break tap.
+
+Done — bottom-right button (encoder 16) now taps tempo:
+
+  Switch-16 ──trigger──> /lx/tempo/tap
+
+One thing you need to know before you rely on it: the tempo clockSource is
+currently MIDI, not Int — it's at 133.2 bpm following an external MIDI clock.
+Under MIDI clock, LX's bpm is read-only, so tap presses will be swallowed and
+won't move the tempo. The mapping is correct and will work the moment you switch
+clockSource to Int.
+```
+
+### A button that should pulse but doesn't
+
+The clap trigger's light had just been moved to a new knob, and the knob stayed one
+color.
+
+> It's not pulsing. It's just light blue. It should be pulsing to green too.
+
+```text
+This is a Twister hardware LED-color config issue, not an LX wiring issue — the
+switch's color scheme (what it shows idle vs. active) is separate persistent
+controller state.
+
+Encoder 1/2 (row 1, "green when active / purple when inactive") use
+colors.active=43 / colors.inactive=107. Encoder 5 currently has a completely
+different palette (active=25, inactive=5), which is why it just looks static
+light blue. Setting it to match row 1's convention.
+
+Both changes applied and verified. Encoder 5's switch should now show
+light-blue-to-green pulsing on each clap, matching row 1's scheme.
+```
+
+### Why is bank 2 dark?
+
+> Can you explain the bank switch button? Pressing to the right makes it all dark. The
+> second bank is all black. How can it show colors? How do you get to bank 2 on the
+> MIDI Fighter Twister?
+
+```text
+Side-button actions are read-only in the tool, but exporting will tell us
+exactly what your buttons are set to do.
+
+  side button 1  →  ccToggle
+  side button 2  →  shiftPage2Toggle
+  side button 3  →  ccToggle
+  side button 4  →  ccToggle
+  side button 5  →  shiftPage1Toggle
+  side button 6  →  ccToggle
+
+None of the six side buttons is assigned a bank action. So pressing right isn't
+failing to switch banks — it was never going to. Four of them just emit a CC, and
+two toggle shift pages, which are a different mechanism from banks entirely.
+What you're seeing when the grid goes dark is almost certainly a shift page with
+nothing configured on it, not bank 2.
+
+Bank 2 isn't dark — you're not reaching it. Your device's encoders for bank 2
+are configured and colored: they send CC 16–19 on channel 1, which is exactly
+what knob-17…knob-20 in the template listen to.
+…
+Reassign a side button to a bank action. This has to be done in DJ TechTools'
+MIDI Fighter Utility.
+```
+
+</details>
+
+Underneath, the Twister side runs through the CLI documented below. Nothing is hidden —
+the same work by hand looks like this:
 
 ```sh
 mft-config export --out twister-config.json
 
 mft-config plan \
   --snapshot twister-config.json \
-  --set bank.1.encoder.1.colors.active=green \
-  --set bank.1.encoder.1.colors.inactive=purple \
+  --set bank.1.encoder.9.colors.inactive=yellow \
+  --set bank.1.encoder.10.colors.inactive=yellow \
+  --set bank.1.encoder.11.colors.inactive=yellow \
+  --set bank.1.encoder.12.colors.inactive=yellow \
+  --set bank.1.encoder.13.colors.inactive=red \
+  --set bank.1.encoder.14.colors.inactive=red \
   --out patch-plan.json
 
 mft-config apply --plan patch-plan.json --yes   # disabled: see #14
 ```
 
-## What this is not
-
-This isn't meant to replace the artist. This is meant to help the creator or the artist
-do things a lot faster, without having to deal with user interfaces or clunky
-back-and-forth. You describe what you want and it gets done for you. So you can get to
-creating, instead of having to worry about the tech.
-
 ---
-
-The protocol implementation is based on the
-[official DJ TechTools MIDI Fighter Twister firmware](https://github.com/DJ-TechTools/Midi_Fighter_Twister_Open_Source).
 
 ## What the controller can do
 
@@ -484,6 +591,9 @@ See [`docs/write-safety.md`](docs/write-safety.md) for protocol-level details
 and remaining limitations.
 
 ## Protocol coverage
+
+The protocol implementation is based on the
+[official DJ TechTools MIDI Fighter Twister firmware](https://github.com/DJ-TechTools/Midi_Fighter_Twister_Open_Source).
 
 The exporter uses Universal MIDI Identity for discovery, command `0x05` for the
 2026 device ID, command `0x02` for globals, and command `0x04`/subcommand `0x01`
