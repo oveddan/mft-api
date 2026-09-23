@@ -10,7 +10,7 @@ import { applyPatchPlan } from "./applier.js";
 import { assertPlanNotConsumed } from "./journal.js";
 
 interface Arguments {
-  command: "list" | "export" | "plan" | "apply" | "help";
+  command: "list" | "export" | "plan" | "apply" | "mcp" | "help";
   device?: number;
   out?: string;
   timeoutMs: number;
@@ -26,6 +26,10 @@ function usage(): string {
   mft-config export [--device <index>] [--out <file>] [--timeout <milliseconds>]
   mft-config plan --snapshot <config.json> --set <path=value> [--set <path=value>] [--out <file>]
   mft-config apply --plan <patch-plan.json> --yes [--device <index>]   (disabled)
+  mft-config mcp
+
+mcp runs a Model Context Protocol server on stdio, for agents. It offers list,
+export, and plan as tools and serves the mft-configurator agent skill.
 
 This tool only sends Universal Identity, global pull (0x02), encoder bulk-pull
 (0x04/0x01), and device-ID pull (0x05) messages. The plan command is offline.
@@ -39,6 +43,10 @@ function parseArguments(argv: string[]): Arguments {
   const command = argv[0] ?? "help";
   if (command === "help" || command === "--help" || command === "-h") {
     return { command: "help", timeoutMs: 500, sets: [], yes: false };
+  }
+  if (command === "mcp") {
+    if (argv.length > 1) throw new Error("mcp takes no options");
+    return { command: "mcp", timeoutMs: 500, sets: [], yes: false };
   }
   if (command !== "list" && command !== "export" && command !== "plan" && command !== "apply") throw new Error(`Unknown command: ${command}`);
 
@@ -138,6 +146,13 @@ async function main(): Promise<void> {
   const args = parseArguments(process.argv.slice(2));
   if (args.command === "help") {
     process.stdout.write(`${usage()}\n`);
+    return;
+  }
+  if (args.command === "mcp") {
+    // stdout carries the protocol from here on; diagnostics go to stderr.
+    const { runMcpServer } = await import("./mcp.js");
+    const { version } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8")) as { version: string };
+    await runMcpServer(version);
     return;
   }
   if (args.command === "plan") {

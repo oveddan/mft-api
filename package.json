@@ -9,7 +9,8 @@
     "midi",
     "sysex",
     "djtechtools",
-    "cli"
+    "cli",
+    "mcp"
   ],
   "homepage": "https://github.com/oveddan/mft-api#readme",
   "bugs": "https://github.com/oveddan/mft-api/issues",
@@ -24,24 +25,28 @@
   },
   "files": [
     "dist",
-    "schema"
+    "schema",
+    "skills"
   ],
   "exports": {
     "./package.json": "./package.json"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node test/run-tests.mjs",
-    "check": "tsc -p tsconfig.json && tsc -p tsconfig.test.json && node test/run-tests.mjs",
+    "test": "tsx test/run-tests.ts",
+    "check": "tsc -p tsconfig.json && tsc -p tsconfig.test.json && tsx test/run-tests.ts",
     "prepack": "npm run check"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
-    "@julusian/midi": "^3.0.1"
+    "@julusian/midi": "^3.0.1",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "^2.0.0",
     "@types/node": "^24.0.0",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0"

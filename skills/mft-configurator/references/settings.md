@@ -1,6 +1,6 @@
 # Supported settings
 
-Use these semantic paths with `plan --set path=value`. Banks and encoders are one-based. Each bank contains encoders 1–16. Firmware `2026-07-02` supports non-mutating detection of four versus eight banks; legacy firmware is treated as four-bank.
+Use these semantic paths as the `path` of each change passed to `plan_changes`. Banks and encoders are one-based. Each bank contains encoders 1–16. Firmware `2026-07-02` supports non-mutating detection of four versus eight banks; legacy firmware is treated as four-bank.
 
 ## Encoder fields
 
@@ -38,17 +38,17 @@ Changing `global.colorMap.code` reinterprets every stored color index and can re
 
 Example: make the top row of bank 1 green while active and purple while inactive:
 
-```sh
-mft-config plan --snapshot twister-config.json \
-  --set bank.1.encoder.1.colors.active=green \
-  --set bank.1.encoder.1.colors.inactive=purple \
-  --set bank.1.encoder.2.colors.active=green \
-  --set bank.1.encoder.2.colors.inactive=purple \
-  --set bank.1.encoder.3.colors.active=green \
-  --set bank.1.encoder.3.colors.inactive=purple \
-  --set bank.1.encoder.4.colors.active=green \
-  --set bank.1.encoder.4.colors.inactive=purple \
-  --out patch-plan.json
+```json
+[
+  { "path": "bank.1.encoder.1.colors.active", "value": "green" },
+  { "path": "bank.1.encoder.1.colors.inactive", "value": "purple" },
+  { "path": "bank.1.encoder.2.colors.active", "value": "green" },
+  { "path": "bank.1.encoder.2.colors.inactive", "value": "purple" },
+  { "path": "bank.1.encoder.3.colors.active", "value": "green" },
+  { "path": "bank.1.encoder.3.colors.inactive", "value": "purple" },
+  { "path": "bank.1.encoder.4.colors.active", "value": "green" },
+  { "path": "bank.1.encoder.4.colors.inactive", "value": "purple" }
+]
 ```
 
 ## Global fields
@@ -68,33 +68,33 @@ mft-config plan --snapshot twister-config.json \
 | `global.sleep.animation.code` | `0` lights off, `1` rainbow wave |
 | `global.bankAnimationsEnabled` | `true` or `false` |
 
-Side-button actions are exported but are not currently supported planner paths. Do not claim they can be changed with this CLI.
+Side-button actions are exported but are not currently supported planner paths. Do not claim they can be changed here.
 
 ## Common plans
 
 Make push switches 1 and 2 in bank 1 toggle CC values:
 
-```sh
-mft-config plan --snapshot twister-config.json \
-  --set bank.1.encoder.1.switch.action.code=1 \
-  --set bank.1.encoder.2.switch.action.code=1 \
-  --out patch-plan.json
+```json
+[
+  { "path": "bank.1.encoder.1.switch.action.code", "value": 1 },
+  { "path": "bank.1.encoder.2.switch.action.code", "value": 1 }
+]
 ```
 
 Map bank 2 encoder 5 rotation to CC 74 on channel 3 and its push to note 60 on channel 10:
 
-```sh
-mft-config plan --snapshot twister-config.json \
-  --set bank.2.encoder.5.encoder.type.code=1 \
-  --set bank.2.encoder.5.encoder.midiChannel=3 \
-  --set bank.2.encoder.5.encoder.midiNumber=74 \
-  --set bank.2.encoder.5.switch.action.code=2 \
-  --set bank.2.encoder.5.switch.midiChannel=10 \
-  --set bank.2.encoder.5.switch.midiNumber=60 \
-  --out patch-plan.json
+```json
+[
+  { "path": "bank.2.encoder.5.encoder.type.code", "value": 1 },
+  { "path": "bank.2.encoder.5.encoder.midiChannel", "value": 3 },
+  { "path": "bank.2.encoder.5.encoder.midiNumber", "value": 74 },
+  { "path": "bank.2.encoder.5.switch.action.code", "value": 2 },
+  { "path": "bank.2.encoder.5.switch.midiChannel", "value": 10 },
+  { "path": "bank.2.encoder.5.switch.midiNumber", "value": 60 }
+]
 ```
 
-The planner rejects no-op values. If one field already has the requested value, omit that `--set` and plan only the remaining changes.
+The planner rejects no-op values. If one field already has the requested value, omit that change and plan only the remaining changes.
 
 ## Firmware and export boundaries
 
